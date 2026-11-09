@@ -56,11 +56,11 @@ export function CreateAd({ catalog }) {
     <section>
       <a href="#/">← Annunci</a>
       <h1>Nuovo Annuncio</h1>
-      <p class="muted">Crei un Annuncio in bozza e l'LLM genera una Variante per ogni Angolo scelto (da 1 a 3).</p>
+      <p class="muted">Crei un Annuncio in bozza e l'LLM genera una Variante per ogni Focus scelto (da 1 a 3).</p>
       <${ErrorBanner} error=${error} onClose=${() => setError(null)} />
       ${failed &&
       html`<div class="banner banner--warn" role="status">
-        <p>Annuncio creato, ma alcuni Angoli non sono stati generati:</p>
+        <p>Annuncio creato, ma alcuni Focus non sono stati generati:</p>
         <ul class="issues">
           ${failed.list.map((f) => html`<li><strong>${f.angle}</strong>: ${explain(f.error)}</li>`)}
         </ul>
@@ -87,7 +87,8 @@ export function CreateAd({ catalog }) {
             onInput=${(e) => setLocationLabel(e.currentTarget.value)} />
         </label>
         <fieldset>
-          <legend>Angoli (${angles.length}/3)</legend>
+          <legend>Focus (${angles.length}/3)</legend>
+          <p class="muted">Su cosa punta il messaggio. Ogni Focus genera una Variante, così le confronti in un test A/B.</p>
           ${allAngles.map(
             (a) => html`<label class="check">
               <input type="checkbox" checked=${angles.includes(a)} disabled=${!angles.includes(a) && angles.length >= 3}
@@ -95,7 +96,7 @@ export function CreateAd({ catalog }) {
             </label>`,
           )}
           <div class="row">
-            <input aria-label="Altro Angolo" placeholder="Altro Angolo" maxlength="60" value=${customAngle}
+            <input aria-label="Altro Focus" placeholder="Altro Focus" maxlength="60" value=${customAngle}
               onInput=${(e) => setCustomAngle(e.currentTarget.value)} />
             <button type="button" class="btn btn--ghost btn--sm" disabled=${!customAngle.trim() || angles.length >= 3} onClick=${addCustom}>Aggiungi</button>
           </div>

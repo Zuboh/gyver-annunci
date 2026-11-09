@@ -107,7 +107,7 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
     const taken = repo
       .listVariants(db, adId)
       .some((v) => v.active && v.id !== exceptVariantId && sameAngle(v.angle, angle))
-    if (taken) throw badRequest(`L'Angolo "${angle}" è già usato da una Variante attiva di questo Annuncio.`, { angle })
+    if (taken) throw badRequest(`Il Focus "${angle}" è già usato da una Variante attiva di questo Annuncio.`, { angle })
   }
 
   /** Variant + its first Version, atomically: a Variant never exists without content. */
@@ -148,7 +148,7 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
 
       const angles = (input.angles ?? [DEFAULT_ANGLE]).map((a) => a.trim())
       if (angles.some((a, i) => angles.findIndex((b) => sameAngle(a, b)) !== i)) {
-        throw badRequest('Gli Angoli di un Annuncio devono essere diversi tra loro.', { angles })
+        throw badRequest('I Focus di un Annuncio devono essere diversi tra loro.', { angles })
       }
 
       // The Brief is shared by every angle: get it once up front so the parallel variant

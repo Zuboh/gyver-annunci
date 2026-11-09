@@ -67,7 +67,7 @@ export function VariantCard({ variant, ad, channel, onChanged, onError }) {
     <section class=${`card variant ${variant.active ? '' : 'variant--discarded'}`}>
       <header class="variant__head">
         <h2>Variante ${variant.label}</h2>
-        <${Chip} kind="angle">Angolo: ${variant.angle}</${Chip}>
+        <${Chip} kind="angle">Focus: ${variant.angle}</${Chip}>
         <${Chip} kind=${variant.active ? 'active' : 'discarded'}>${variant.active ? 'Attiva' : 'Scartata'}</${Chip}>
         <span class="spacer"></span>
         <button class="btn btn--ghost btn--sm" disabled=${busy || frozen} onClick=${toggleActive}>
@@ -218,7 +218,7 @@ export function AdDetail({ id, catalog }) {
       )}
 
       <form class="card inline-form" onSubmit=${addVariant}>
-        <label>Nuova Variante con Angolo
+        <label>Nuova Variante con Focus
           <input list="angle-suggestions" value=${newAngle} maxlength="60" placeholder="es. stipendio" disabled=${archived}
             onInput=${(e) => setNewAngle(e.currentTarget.value)} />
         </label>

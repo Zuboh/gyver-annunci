@@ -1,6 +1,6 @@
 # Annunci · Gyver
 
-Sezione con cui il Team Delivery trasforma una Job Offer in Annunci per Indeed, Instagram, TikTok e WhatsApp: un Brief di fatti pubblicabili, poi una Variante per ogni Angolo, validata sui vincoli del canale e salvata come Versione immutabile. Vocabolario in [`GLOSSARY.md`](GLOSSARY.md), specifica in [`docs/SPEC.md`](docs/SPEC.md).
+Sezione con cui il Team Delivery trasforma una Job Offer in Annunci per Indeed, Instagram, TikTok e WhatsApp: un Brief di fatti pubblicabili, poi una Variante per ogni Focus, validata sui vincoli del canale e salvata come Versione immutabile. Vocabolario in [`GLOSSARY.md`](GLOSSARY.md), specifica in [`docs/SPEC.md`](docs/SPEC.md).
 
 Altri documenti: [architecture.md](architecture.md) · [prompts.md](prompts.md) · [ai-workflows.md](ai-workflows.md) · [tradeoffs.md](tradeoffs.md)
 
@@ -63,10 +63,10 @@ Backend e frontend sono lo stesso processo: `bun run dev` serve l'API e la pagin
 ### Flusso completo (serve la chiave)
 
 1. Apri <http://127.0.0.1:3000>: elenco Annunci con filtri per Job Offer, Canale e Stato. I 3 esempi del seed sono già lì.
-2. **Nuovo Annuncio** (`#/new`): scegli `jo_001`, un Canale e un Formato (solo quelli ammessi) e da 1 a 3 Angoli, tra quelli suggeriti o scritti liberi. Poi **Crea e genera**.
-3. Il server genera il Brief (solo la prima volta per la Job Offer) e una Variante per Angolo, e apre il dettaglio. L'anteprima dipende dal canale: volantino A4 per WhatsApp, riquadro 1:1 o 9:16 per i social, testo per Indeed. Sotto c'è la scheda della Creative.
+2. **Nuovo Annuncio** (`#/new`): scegli `jo_001`, un Canale e un Formato (solo quelli ammessi) e da 1 a 3 Focus, tra quelli suggeriti o scritti liberi. Poi **Crea e genera**.
+3. Il server genera il Brief (solo la prima volta per la Job Offer) e una Variante per Focus, e apre il dettaglio. L'anteprima dipende dal canale: volantino A4 per WhatsApp, riquadro 1:1 o 9:16 per i social, testo per Indeed. Sotto c'è la scheda della Creative.
 4. Nella Variante: **Rigenera con LLM** crea una nuova Versione `llm`. **Modifica a mano** apre il JSON e lo salva come Versione `manual`; un contenuto non valido mostra gli errori campo per campo. **Scarta** / **Ripristina** cambia lo stato della Variante. Lo storico delle Versioni mostra l'Origine di ciascuna.
-5. Cambia lo Stato o il Luogo dell'Annuncio, oppure aggiungi una Variante con un Angolo nuovo.
+5. Cambia lo Stato o il Luogo dell'Annuncio, oppure aggiungi una Variante con un Focus nuovo.
 
 **Senza chiave** funzionano l'elenco, i filtri, il dettaglio, le anteprime, la modifica manuale, lo Stato, il Luogo e lo scarto. Ogni azione che genera risponde `503 LLM_UNAVAILABLE` e la UI lo spiega in un banner.
 
@@ -80,23 +80,23 @@ Errori sempre nella forma `{ "error": { "code", "message", "details?" } }`.
 | `GET /api/job-offers/:id` | Job Offer completa (payload interno incluso) con il Brief corrente (o `null`) | 200, 404 |
 | `POST /api/job-offers/:id/brief` | Rigenera il Brief | 201, 404, 502, 503 |
 | `GET /api/channels` | Canali con i Formati ammessi e i vincoli | 200 |
-| `GET /api/angles` | Angoli suggeriti | 200 |
+| `GET /api/angles` | Focus suggeriti | 200 |
 | `GET /api/ads?job_offer_id=&channel=&status=` | Elenco, filtri combinabili | 200, 400 |
 | `GET /api/ads/:id` | Dettaglio con le Varianti e la Versione corrente | 200, 404 |
-| `POST /api/ads` | Crea un Annuncio in bozza e genera una Variante per Angolo. Se tutti gli Angoli falliscono non salva nulla | 201 (con `failedAngles` se alcuni falliscono), 400, 404, 422, 502, 503 |
+| `POST /api/ads` | Crea un Annuncio in bozza e genera una Variante per Focus. Se tutti i Focus falliscono non salva nulla | 201 (con `failedAngles` se alcuni falliscono), 400, 404, 422, 502, 503 |
 | `PATCH /api/ads/:id` | Stato e/o Luogo | 200, 400, 404, 422 `AD_HAS_NO_ACTIVE_VARIANT` (`ready`/`published` senza Varianti attive) |
 | `POST /api/ads/:id/variants` | Nuova Variante generata | 201, 400, 404, 422 `AD_ARCHIVED`, 502, 503 |
 | `GET /api/variants/:id/versions` | Storico delle Versioni | 200, 404 |
-| `POST /api/variants/:id/regenerate` | Nuova Versione `llm`, stesso Angolo | 201, 404, 422 `AD_ARCHIVED`, 502, 503 |
+| `POST /api/variants/:id/regenerate` | Nuova Versione `llm`, stesso Focus | 201, 404, 422 `AD_ARCHIVED`, 502, 503 |
 | `PUT /api/variants/:id/content` | Nuova Versione `manual`, se valida | 201, 404, 422 `INVALID_CONTENT` / `AD_ARCHIVED` |
-| `PATCH /api/variants/:id` | `{ "active": false }` la scarta, `true` la ripristina (400 se l'Angolo è già attivo) | 200, 400, 404, 422 `AD_ARCHIVED` |
+| `PATCH /api/variants/:id` | `{ "active": false }` la scarta, `true` la ripristina (400 se il Focus è già attivo) | 200, 400, 404, 422 `AD_ARCHIVED` |
 | `GET /api/health` | Stato del server | 200 |
 
 ```bash
 # Elenco filtrato
 curl 'http://127.0.0.1:3000/api/ads?channel=whatsapp&status=published'
 
-# Creazione con due Angoli (serve la chiave)
+# Creazione con due Focus (serve la chiave)
 curl -X POST http://127.0.0.1:3000/api/ads -H 'content-type: application/json' \
   -d '{"job_offer_id":"jo_001","channel":"instagram","format":"image","angles":["carriera","stipendio"]}'
 

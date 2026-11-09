@@ -28,9 +28,9 @@ _Evita_: status di pubblicazione, fase
 Una delle alternative di contenuto di un Annuncio, messe a confronto per capire quale attrae di più. Comprende testo e Creative insieme. Può essere attiva o scartata.
 _Evita_: versione, copy, test
 
-**Angolo** (`angle`):
-Il messaggio principale su cui punta una Variante (es. carriera, stipendio, multinazionale). Varianti dello stesso Annuncio hanno Angoli diversi.
-_Evita_: tema, hook, taglio
+**Focus** (`angle` nel codice e nell'API; nei prompt v6 al modello resta "Angolo"):
+Ciò che una Variante mette in evidenza per attirare il candidato (es. carriera, stipendio, multinazionale). Varianti attive dello stesso Annuncio hanno Focus diversi.
+_Evita_: angolo, tema, hook, taglio
 
 **Versione** (`Version`):
 Uno stato del contenuto di una Variante, immutabile. Ha un'Origine. Ogni modifica crea una nuova Versione; la corrente è l'ultima.

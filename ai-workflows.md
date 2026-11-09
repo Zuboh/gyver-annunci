@@ -34,7 +34,7 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 
 - **v1 → v4**: ogni versione ha passato **5/6** campioni al primo tentativo, e il fallimento cambiava campione: `highlightWord` fuori dagli overlay in v1 e v4, caption TikTok oltre 150 caratteri in v2 e v3. Il tetto di 3 iterazioni è stato raggiunto senza 6/6.
 - **Giudice su v4** ([`docs/judge-report-v4.md`](docs/judge-report-v4.md)): 5/6 accettati. **whatsapp-image_text è respinto con Fedeltà = 0.** "Indennità di 60 € per le trasferte" generalizza un'indennità che la Job Offer prevede solo a notte nelle trasferte di più giorni. Il rischio vero non era la fuga di dati riservati, che reggeva ovunque: era un benefit parafrasato tanto largo da contraddire le condizioni nascoste.
-- **v5**: le 5 correzioni prioritarie del giudice sono diventate prompt **e** codice: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola, Angoli allineati ai sellingPoints. Due giri, entrambi **6/6** al primo tentativo.
+- **v5**: le 5 correzioni prioritarie del giudice sono diventate prompt **e** codice: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola, Focus allineati ai sellingPoints. Due giri, entrambi **6/6** al primo tentativo.
 - **v6**, dopo la security review: `doNotSay` tolto dai prompt di canale e riga anti-injection nel Brief. Un giro reale: 5/6 al primo tentativo e 6/6 dopo il retry. Con un giro per versione e una sola Job Offer, le differenze di un campione non sono significative. I limiti residui sono in [prompts.md](prompts.md).
 - Costo stimato di tutti i giri: meno di 0,05 $.
 
@@ -73,8 +73,8 @@ Code review (`agent-reviewer`) e security review (`agent-security-reviewer`) son
 | Problema | Correzione |
 |---|---|
 | L'`idleTimeout` di 30 s di Elysia chiudeva il socket durante la catena Brief + Variante | `listen({ hostname, idleTimeout: 255 })` in [`server.ts`](backend/src/server.ts), con bind su `127.0.0.1` per default (`HOST`) |
-| Un Annuncio vuoto tornava `201` quando tutti gli Angoli fallivano | Prima si genera, poi si salva in una transazione; se falliscono tutti, niente salvataggio e 502 o 503 |
-| Ripristinare una Variante poteva duplicare un Angolo attivo | Controllo anche al ripristino e indice unico parziale `variants_active_angle` |
+| Un Annuncio vuoto tornava `201` quando tutti i Focus fallivano | Prima si genera, poi si salva in una transazione; se falliscono tutti, niente salvataggio e 502 o 503 |
+| Ripristinare una Variante poteva duplicare un Focus attivo | Controllo anche al ripristino e indice unico parziale `variants_active_angle` |
 | `GET /api/job-offers` esponeva l'intero payload interno | Solo `{ id, title, companyName, status }` nell'elenco |
 | `doNotSay` arrivava al prompt del copywriter: il prompt riceveva proprio i fatti da nascondere | Tolto dai prompt di canale; `internalFactIssues` sull'output LLM e sul Brief |
 | Prompt injection dai testi della Job Offer | Riga anti-injection nel prompt del Brief; `contactIssues` blocca link, email e telefoni nell'output |

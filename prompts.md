@@ -31,17 +31,17 @@ La pipeline ha due passi ([ADR 0003](docs/adr/0003-brief-come-passaggio-intermed
 - niente link, email o telefoni;
 - la retribuzione solo in tre forme: "RAL da <min> a <max> €", "RAL fino a <max> €", "RAL da <min> €";
 - i benefit con la condizione completa, o non citati;
-- il messaggio costruito sull'Angolo indicato;
+- il messaggio costruito sul Focus indicato;
 - niente markdown;
 - è meglio un testo corto che uno troncato.
 
 Ogni tipo aggiunge la propria struttura:
 
-- **Indeed**: 4 sezioni nell'ordine dell'esempio del PDF; titolo "ruolo: specifica in chiave Angolo"; bullet come frasi complete con il punto; la via solo nel campo `address`.
-- **Social**: overlay con il ruolo nella riga 1 e Angolo + fatto nella riga 2; la RAL negli overlay solo con l'Angolo stipendio; `highlightWord` di una sola parola presente negli overlay; caption che apre sull'Angolo; TikTok parlato e al tu; hashtag diversi dal nome dell'Angolo; massimo 3 emoji.
-- **WhatsApp**: titolo e primo badge sul fatto dell'Angolo e su nessun altro; Luogo e trasferte in un solo badge; sezioni nell'ordine dell'esempio; nessuna emoji.
+- **Indeed**: 4 sezioni nell'ordine dell'esempio del PDF; titolo "ruolo: specifica in chiave Focus"; bullet come frasi complete con il punto; la via solo nel campo `address`.
+- **Social**: overlay con il ruolo nella riga 1 e Focus + fatto nella riga 2; la RAL negli overlay solo con il Focus stipendio; `highlightWord` di una sola parola presente negli overlay; caption che apre sul Focus; TikTok parlato e al tu; hashtag diversi dal nome del Focus; massimo 3 emoji.
+- **WhatsApp**: titolo e primo badge sul fatto del Focus e su nessun altro; Luogo e trasferte in un solo badge; sezioni nell'ordine dell'esempio; nessuna emoji.
 
-**Messaggio di variante** (`variantUserMessage`): Angolo, Luogo da mostrare, Canale con le linee guida di tono (dal DB), vincoli del Formato di Canale in testo e Brief in JSON. Il Brief arriva **senza `doNotSay`**, e ai canali non job board anche con `siteAddress: null`. Per i campi fino a 300 caratteri i vincoli chiedono un obiettivo di circa 2/3 del massimo con un budget di parole, perché il modello sfora i limiti in caratteri e conta meglio le parole. Al retry si aggiunge "## Correzioni richieste" con le issue del tentativo precedente.
+**Messaggio di variante** (`variantUserMessage`): Focus, Luogo da mostrare, Canale con le linee guida di tono (dal DB), vincoli del Formato di Canale in testo e Brief in JSON. Il Brief arriva **senza `doNotSay`**, e ai canali non job board anche con `siteAddress: null`. Per i campi fino a 300 caratteri i vincoli chiedono un obiettivo di circa 2/3 del massimo con un budget di parole, perché il modello sfora i limiti in caratteri e conta meglio le parole. Al retry si aggiunge "## Correzioni richieste" con le issue del tentativo precedente.
 
 Gli esempi nei prompt usano i numeri di `jo_001` (38.000 €, 1.700 dipendenti, 60 € a notte): con un'altra Job Offer vanno resi generici.
 
@@ -77,7 +77,7 @@ Fino a v5 la lista arrivava anche ai prompt di canale come elenco di "cose da no
 - **1 retry** (`MAX_ATTEMPTS = 2`): per le Varianti le issue tornano nel prompt come `previousIssues`, mentre il Brief riprova senza feedback;
 - al secondo fallimento non si salva nulla e la risposta è **502 `GENERATION_FAILED`** con `details.runId`;
 - chiave assente, rete, 401/403, modello inesistente, 429 o 5xx diventano **503 `LLM_UNAVAILABLE`**, con il tentativo registrato come `error`;
-- nella creazione con più Angoli: se una parte fallisce, la risposta è `201` con `failedAngles[{ angle, error }]`; se falliscono tutti, non si salva nulla e torna il primo errore (502 o 503).
+- nella creazione con più Focus: se una parte fallisce, la risposta è `201` con `failedAngles[{ angle, error }]`; se falliscono tutti, non si salva nulla e torna il primo errore (502 o 503).
 
 I test coprono retry poi successo, sempre non valido → 502, rete → 503, indirizzo su social → retry o 502, e le regole di sicurezza ([`backend/test/generation-errors.test.ts`](backend/test/generation-errors.test.ts), [`backend/test/validation-rules.test.ts`](backend/test/validation-rules.test.ts), [`backend/test/security.test.ts`](backend/test/security.test.ts)).
 
@@ -101,9 +101,9 @@ Campioni: `bun run gen:sample` su `jo_001`, uno per ciascuno dei 6 Formati di Ca
 |---|---|---|
 | v1 | `doNotSay` copiato dall'esempio del prompt e senza la condizione vera; "AB Group" invece di "AB Group SpA"; promesse inventate ("crescita professionale"); l'azienda in prima persona; "RAL 32-38k€"; hashtag con lo spazio | Baseline |
 | v2 | Caption TikTok oltre 150 caratteri; via nella descrizione Indeed; `highlightWord` come frase; nessun sellingPoint per "carriera" | `companyName` nel Brief; tolto l'esempio da `doNotSay`; `travel` neutro; regole comuni (terza persona, RAL estesa, niente markdown); struttura Indeed e WhatsApp dal PDF |
-| v3 | TikTok ancora 157/150; `doNotSay` vuoto per la scappatoia "lascia vuota"; "Inizia la tua carriera" a un tecnico con 3-5 anni | Budget di parole sui campi corti; sede = Luogo su Indeed; un sellingPoint per Angolo |
-| v4 | `highlightWord` assente dagli overlay su WhatsApp; Angoli come temi ("dimensione dell'azienda"), "carriera" sparito; overlay "RAL da 38.000 €"; bullet con la virgola. **Il giudice respinge whatsapp-image_text con Fedeltà 0**: "Indennità di 60 € per le trasferte" generalizza un'indennità prevista solo a notte nelle trasferte di più giorni ([`docs/judge-report-v4.md`](docs/judge-report-v4.md)) | Obiettivo a 2/3 del limite; `doNotSay` con la citazione; titolo Indeed in chiave Angolo |
-| v5 | Errori di italiano, `#carriera`, RAL negli overlay non sullo stipendio | `suggestedAngles` prima di `sellingPoints` e allineati; benefit con la condizione; tre forme di retribuzione; primo badge sull'Angolo; overlay senza i fatti degli altri Angoli; TikTok parlato. **Validazione più severa nel codice**: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola e a parola intera |
+| v3 | TikTok ancora 157/150; `doNotSay` vuoto per la scappatoia "lascia vuota"; "Inizia la tua carriera" a un tecnico con 3-5 anni | Budget di parole sui campi corti; sede = Luogo su Indeed; un sellingPoint per Focus |
+| v4 | `highlightWord` assente dagli overlay su WhatsApp; Focus come temi ("dimensione dell'azienda"), "carriera" sparito; overlay "RAL da 38.000 €"; bullet con la virgola. **Il giudice respinge whatsapp-image_text con Fedeltà 0**: "Indennità di 60 € per le trasferte" generalizza un'indennità prevista solo a notte nelle trasferte di più giorni ([`docs/judge-report-v4.md`](docs/judge-report-v4.md)) | Obiettivo a 2/3 del limite; `doNotSay` con la citazione; titolo Indeed in chiave Focus |
+| v5 | Errori di italiano, `#carriera`, RAL negli overlay non sullo stipendio | `suggestedAngles` prima di `sellingPoints` e allineati; benefit con la condizione; tre forme di retribuzione; primo badge sul Focus; overlay senza i fatti degli altri Focus; TikTok parlato. **Validazione più severa nel codice**: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola e a parola intera |
 | v6 | Dalla security review: i prompt di canale ricevevano `doNotSay`, cioè proprio i fatti interni; nessuna difesa dai testi della Job Offer usati come istruzioni | **Modifica di sicurezza**: `doNotSay` tolto dai prompt di canale; riga anti-injection nel prompt del Brief; regole comuni su condizioni non nel Brief e sui contatti; nuove regole solo LLM `internalFactIssues` e `contactIssues`. Giro reale: 5/6 al primo tentativo, 6/6 dopo il retry. Controllo di riservatezza pulito: nessun "senza indennità", nessun "85%", nessun link, email o telefono, l'indirizzo esatto solo in `address` di Indeed |
 
 La lezione di v1-v5: le regole che il modello sbaglia in modo ripetuto, come `highlightWord` o la forma della RAL, si chiudono nel codice, non con altre istruzioni nel prompt.
@@ -112,9 +112,9 @@ La lezione di v1-v5: le regole che il modello sbaglia in modo ripetuto, come `hi
 
 - **Indennità accorciata**: in whatsapp-image_text diventa "Indennità di 60 € lordi a notte", senza "trasferte di più giorni". Passa perché la regola chiede almeno una condizione, non tutte.
 - **"Effetti"** invece di "Effettui" nel testo Indeed. Il Brief v6 ora la scrive giusta, ma WhatsApp mescola "Eseguirai".
-- **`#carriera`** nella Variante TikTok sull'Angolo carriera ripete il nome dell'Angolo.
+- **`#carriera`** nella Variante TikTok sul Focus carriera ripete il nome del Focus.
 - **La RAL negli overlay** di Varianti che non puntano sullo stipendio (TikTok carriera).
 - **Anni nei requirements**: il Brief scrive "almeno 3-4 anni" in `requirements`, contro la regola, e Indeed e WhatsApp lo ripetono accanto a `experience: "3-5 anni"`.
 - **`travel` del Brief** perde le trasferte di più giorni ("Trasferte giornaliere frequenti"), quindi l'indennità "a notte" resta senza il suo contesto.
 
-Le regole "hashtag diverso dall'Angolo", "RAL negli overlay solo con l'Angolo stipendio" e "anni solo in experience" sono solo nel prompt: con gpt-4o-mini servirebbe un controllo nel codice. I due peggioramenti del Brief v6 dipendono dalla variabilità del modello, perché v6 aggiunge al Brief solo la riga anti-injection. Prima di dichiarare v6 equivalente a v5 servono altri giri e il giudice.
+Le regole "hashtag diverso dalil Focus", "RAL negli overlay solo con il Focus stipendio" e "anni solo in experience" sono solo nel prompt: con gpt-4o-mini servirebbe un controllo nel codice. I due peggioramenti del Brief v6 dipendono dalla variabilità del modello, perché v6 aggiunge al Brief solo la riga anti-injection. Prima di dichiarare v6 equivalente a v5 servono altri giri e il giudice.
