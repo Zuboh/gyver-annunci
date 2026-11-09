@@ -23,6 +23,6 @@ describe('smoke', () => {
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toContain('text/html')
     const body = await res.text()
-    expect(body).toBe(await Bun.file(new URL('../public/index.html', import.meta.url)).text())
+    expect(body).toBe(await Bun.file(new URL('../../frontend/index.html', import.meta.url)).text())
   })
 })

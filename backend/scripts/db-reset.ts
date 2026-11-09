@@ -1,10 +1,10 @@
-// Deletes and recreates the database file from src/db/schema.sql, then seeds it.
+// Deletes and recreates the database file from backend/src/db/schema.sql, then seeds it.
 import { mkdirSync, rmSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { openDatabase } from '../src/db/open-database'
 import { seed } from '../src/db/seed'
 
-const path = process.env.DB_PATH ?? 'data/gyver.db'
+const path = process.env.DB_PATH ?? 'backend/data/gyver.db'
 
 for (const suffix of ['', '-wal', '-shm', '-journal']) rmSync(`${path}${suffix}`, { force: true })
 mkdirSync(dirname(path), { recursive: true })

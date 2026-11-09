@@ -1,6 +1,6 @@
 // Generates one sample per allowed Channel × Format for jo_001 with the real OpenAI model and
 // writes them to docs/samples/<prompt-version>/<channel>-<format>.json (content + Brief + runs).
-// Works on a freshly seeded in-memory database: data/gyver.db is never touched.
+// Works on a freshly seeded in-memory database: backend/data/gyver.db is never touched.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { listChannelsWithFormats } from '../src/catalog/channel-catalog'

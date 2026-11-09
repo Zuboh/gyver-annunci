@@ -27,7 +27,7 @@ const errorBody = (code: ErrorCode, message: string, details?: unknown) => ({
 const toIssuePath = (path: string) => path.replace(/^\//, '').replaceAll('/', '.')
 
 /** Resolved from this file, so the app serves the UI whatever the working directory. */
-const publicDir = fileURLToPath(new URL('../public', import.meta.url))
+const frontendDir = fileURLToPath(new URL('../../frontend', import.meta.url))
 
 export function createApp(deps: AppDeps) {
   const generation = createGenerationService(deps)
@@ -73,11 +73,11 @@ export function createApp(deps: AppDeps) {
       .use(channelsRoutes({ db: deps.db }))
       .use(adsRoutes(ads))
       .use(variantsRoutes(ads))
-      // Static UI: index on `/`, assets under `/public`. Never `indexHTML: true`, which would
+      // Static UI: index on `/`, assets under `/assets`. Never `indexHTML: true`, which would
       // turn API 404s into HTML. A handler (not `file()`) so the file is read on every request:
       // `file()` is compiled into a static response with the Content-Length of startup time.
-      .get('/', () => Bun.file(`${publicDir}/index.html`))
-      .use(staticPlugin({ assets: publicDir, prefix: '/public' }))
+      .get('/', () => Bun.file(`${frontendDir}/index.html`))
+      .use(staticPlugin({ assets: frontendDir, prefix: '/assets' }))
   )
 }
 

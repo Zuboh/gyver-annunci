@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { setup } from './helpers'
 
-// jo_001 (src/db/seed-data.ts): ral_min 32000, ral_max 38000.
+// jo_001 (backend/src/db/seed-data.ts): ral_min 32000, ral_max 38000.
 describe('salary rule on manual Version (PUT /api/variants/:id/content)', () => {
   test('salary outside the Job Offer RAL range → 422 INVALID_CONTENT on the salary field, nothing saved', async () => {
     const { api, seededAd } = setup()

@@ -3,7 +3,7 @@ import type { GenerateVariantContentInput } from '../src/llm/llm-client'
 import { validVariantContent } from '../src/llm/fake-llm-client'
 import { setup } from './helpers'
 
-// jo_001 (src/db/seed-data.ts): RAL 32.000–38.000 €; "Indennità di 60 € lordi a notte per le
+// jo_001 (backend/src/db/seed-data.ts): RAL 32.000–38.000 €; "Indennità di 60 € lordi a notte per le
 // trasferte multi-giorno"; daily trips have no allowance.
 
 type Content = Record<string, any>

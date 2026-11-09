@@ -1,7 +1,7 @@
 review-receipts/
 .env
 node_modules/
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
+backend/data/*.db-journal
+backend/data/*.db-wal
+backend/data/*.db-shm
 .DS_Store

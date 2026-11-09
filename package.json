@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/server.ts",
-    "start": "bun src/server.ts",
-    "db:reset": "bun scripts/db-reset.ts",
-    "test": "bun test",
-    "gen:sample": "bun scripts/gen-sample.ts"
+    "dev": "bun --watch backend/src/server.ts",
+    "start": "bun backend/src/server.ts",
+    "db:reset": "bun backend/scripts/db-reset.ts",
+    "test": "bun test backend/test",
+    "gen:sample": "bun backend/scripts/gen-sample.ts"
   },
   "dependencies": {
     "@elysia/static": "1.4.12",
