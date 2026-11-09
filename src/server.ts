@@ -1,10 +1,11 @@
 import { createApp } from './app'
 import { openDatabase } from './db/open-database'
-import { createUnavailableLlmClient } from './llm/llm-client'
+import { createOpenAiLlmClient } from './llm/openai-llm-client'
 
 const db = openDatabase(process.env.DB_PATH ?? 'data/gyver.db')
-// TODO(llm): use the OpenAI LlmClient when OPENAI_API_KEY is set (implemented in a later step).
-const llm = createUnavailableLlmClient('Il client LLM non è ancora configurato.')
+// Without OPENAI_API_KEY the client answers every generation with LLM_UNAVAILABLE (503);
+// reading and editing Ads still works.
+const llm = createOpenAiLlmClient({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL })
 const port = Number(process.env.PORT ?? 3000)
 
 createApp({ db, llm }).listen(port)

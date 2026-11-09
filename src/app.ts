@@ -1,9 +1,17 @@
 // HTTP app factory: the single test seam (SPEC "Testing Decisions"). Tests build it with an
 // in-memory DB and a FakeLlmClient and call app.handle(request) directly.
 import type { Database } from 'bun:sqlite'
-import { Elysia } from 'elysia'
+import { fileURLToPath } from 'node:url'
+import { staticPlugin } from '@elysia/static'
+import { Elysia, file } from 'elysia'
+import { createAdUseCases } from './ads/ad-use-cases'
 import type { ContentIssue } from './domain/types'
+import { createGenerationService } from './generation/generation-service'
+import { adsRoutes } from './http/ads-routes'
+import { channelsRoutes } from './http/channels-routes'
 import { AppError, type ErrorCode } from './http/errors'
+import { jobOffersRoutes } from './http/job-offers-routes'
+import { variantsRoutes } from './http/variants-routes'
 import { LlmUnavailableError, type LlmClient } from './llm/llm-client'
 
 export interface AppDeps {
@@ -18,8 +26,12 @@ const errorBody = (code: ErrorCode, message: string, details?: unknown) => ({
 /** Elysia validation path "/location/label" → ContentIssue path "location.label". */
 const toIssuePath = (path: string) => path.replace(/^\//, '').replaceAll('/', '.')
 
-/** `deps` is consumed by the route modules plugged in below. */
+/** Resolved from this file, so the app serves the UI whatever the working directory. */
+const publicDir = fileURLToPath(new URL('../public', import.meta.url))
+
 export function createApp(deps: AppDeps) {
+  const generation = createGenerationService(deps)
+  const ads = createAdUseCases({ db: deps.db, generation })
   return (
     new Elysia()
       // Registered before any route so it covers every route and every plugin used below.
@@ -56,10 +68,15 @@ export function createApp(deps: AppDeps) {
         }
       })
       .get('/api/health', () => ({ status: 'ok' }))
-    // Route modules plug in here, one per area, as functions of the deps returning an Elysia
-    // instance with full paths, e.g. `.use(jobOffersRoutes(deps))`, `.use(adsRoutes(deps))`.
-    // Static UI: `.get('/', file('public/index.html'))` + staticPlugin with a `/public` prefix;
-    // never `indexHTML: true`, which would turn API 404s into HTML.
+      // Route modules: one per area, each an Elysia instance with full paths.
+      .use(jobOffersRoutes({ db: deps.db, generation }))
+      .use(channelsRoutes({ db: deps.db }))
+      .use(adsRoutes(ads))
+      .use(variantsRoutes(ads))
+      // Static UI: index on `/`, assets under `/public`. Never `indexHTML: true`, which would
+      // turn API 404s into HTML.
+      .get('/', file(`${publicDir}/index.html`))
+      .use(staticPlugin({ assets: publicDir, prefix: '/public' }))
   )
 }
 
