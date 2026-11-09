@@ -169,15 +169,15 @@ export function createApp(deps: { db: Database; llm: LlmClient }) {
       .post('/ads', ({ body, llm }) => llm.extract(body.text), {
         body: t.Object({ text: t.String({ minLength: 1 }) })
       }))
-    .get('/', file('public/index.html'))     // import { file } from 'elysia' (§2.7)
-    .use(staticPlugin({ assets: 'public', prefix: '/public' }))
+    .get('/', file('frontend/index.html'))   // import { file } from 'elysia' (§2.7)
+    .use(staticPlugin({ assets: 'frontend', prefix: '/assets' }))
 }
 
-// src/index.ts
+// backend/src/index.ts
 // createApp({ db: new Database('data.sqlite'), llm: realClient }).listen(3000)
 ```
 La catena di metodi è **obbligatoria** per l'inferenza dei tipi (vedi Pitfall).
-Cosa fa `prefix: '/'` nello static plugin è **NON VERIFICATO**: per questo qui si usa `/public` (§2.7).
+Cosa fa `prefix: '/'` nello static plugin è **NON VERIFICATO**: per questo qui si usa `/assets` (§2.7).
 
 ### 2.6 Test con `app.handle(Request)`
 
@@ -214,10 +214,10 @@ Opzioni (https://elysiajs.com/plugins/static.html):
 ```ts
 import { Elysia, file } from 'elysia'
 new Elysia()
-  .get('/', file('public/index.html'))                      // https://elysiajs.com/essential/handler.html
-  .use(staticPlugin({ assets: 'public', prefix: '/public' })) // /public/app.js ecc.
+  .get('/', file('frontend/index.html'))                      // https://elysiajs.com/essential/handler.html
+  .use(staticPlugin({ assets: 'frontend', prefix: '/assets' })) // /assets/app.js ecc.
 ```
-In alternativa `.get('/', () => Bun.file('./public/index.html'))` (https://elysiajs.com/blog/elysia-12.html).
+In alternativa `.get('/', () => Bun.file('./frontend/index.html'))` (https://elysiajs.com/blog/elysia-12.html).
 
 ## 3. bun:sqlite
 
@@ -297,7 +297,7 @@ describe('GET /api/ads', () => {
 ```
 
 - File scoperti: `*.test.{ts,js,...}`, `*_test.*`, `*.spec.*`, `*_spec.*` (ricorsivo).
-- Un file: `bun test ./test/ads.test.ts` (il path deve iniziare con `./` o `/`).
+- Un file: `bun test ./backend/test/ads.test.ts` (il path deve iniziare con `./` o `/`).
 - Per nome: `bun test -t "lista vuota"`; watch: `bun test --watch`; timeout default per test 5000 ms (`--timeout`).
 - Niente mock: si iniettano i fake via `createApp`.
 

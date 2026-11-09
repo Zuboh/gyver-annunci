@@ -20,7 +20,7 @@ bun --version
 ```bash
 bun install                 # dipendenze con versioni fissate (bun.lock)
 cp .env.example .env        # poi inserisci la chiave in .env
-bun run db:reset            # ricrea data/gyver.db dallo schema e lo popola
+bun run db:reset            # ricrea backend/data/gyver.db dallo schema e lo popola
 bun run dev                 # backend + interfaccia su http://127.0.0.1:3000
 ```
 
@@ -32,13 +32,13 @@ Variabili d'ambiente (Bun legge `.env` da solo):
 | `OPENAI_MODEL` | `gpt-4o-mini` | Modello per Brief e Varianti. Deve supportare gli structured outputs. |
 | `PORT` | `3000` | Porta HTTP. |
 | `HOST` | `127.0.0.1` | Indirizzo di ascolto. Il default è solo locale. `0.0.0.0` espone il server sulla rete, ma **non c'è autenticazione**. |
-| `DB_PATH` | `data/gyver.db` | File SQLite. `db:reset` e il server usano lo stesso valore. |
+| `DB_PATH` | `backend/data/gyver.db` | File SQLite. `db:reset` e il server usano lo stesso valore. |
 
 Nessuna chiave è nel codice o nella repo: `.env` è in `.gitignore`.
 
 ### Database
 
-`data/gyver.db` è **già versionato e popolato**: il server parte anche senza `db:reset`. `bun run db:reset` ([`scripts/db-reset.ts`](scripts/db-reset.ts)) cancella il file, applica [`src/db/schema.sql`](src/db/schema.sql) ed esegue il seed ([`src/db/seed.ts`](src/db/seed.ts)):
+`backend/data/gyver.db` è **già versionato e popolato**: il server parte anche senza `db:reset`. `bun run db:reset` ([`backend/scripts/db-reset.ts`](backend/scripts/db-reset.ts)) cancella il file, applica [`backend/src/db/schema.sql`](backend/src/db/schema.sql) ed esegue il seed ([`backend/src/db/seed.ts`](backend/src/db/seed.ts)):
 
 - la Job Offer `jo_001` del PDF;
 - i 4 Canali e i 6 Formati di Canale ammessi, con i vincoli;
@@ -50,15 +50,15 @@ Ogni esempio passa da `validateContent` prima di entrare, quindi il seed non pu�
 
 | Comando | Cosa fa |
 |---|---|
-| `bun run dev` | Server con riavvio automatico ([`src/server.ts`](src/server.ts)). |
+| `bun run dev` | Server con riavvio automatico ([`backend/src/server.ts`](backend/src/server.ts)). |
 | `bun run start` | Server senza watch. |
 | `bun test` | 81 test di integrazione attraverso `createApp`, con DB in memoria e LLM finto: niente rete, niente chiave. |
 | `bun run db:reset` | Ricrea e ripopola il DB. |
-| `bun run gen:sample` | Genera un campione reale per ogni Formato di Canale di `jo_001` in `docs/samples/<versione-prompt>/`. Richiede la chiave e usa un DB in memoria, quindi `data/gyver.db` non cambia. Senza chiave esce con codice 1. |
+| `bun run gen:sample` | Genera un campione reale per ogni Formato di Canale di `jo_001` in `docs/samples/<versione-prompt>/`. Richiede la chiave e usa un DB in memoria, quindi `backend/data/gyver.db` non cambia. Senza chiave esce con codice 1. |
 
 ## Interfaccia
 
-Backend e frontend sono lo stesso processo: `bun run dev` serve l'API e la pagina su **<http://127.0.0.1:3000>**. La UI (Preact + htm da CDN, nessun build step) è in [`public/`](public/). L'unico passo in più è la connessione a internet, per `esm.sh` e Google Fonts.
+Backend e frontend sono lo stesso processo: `bun run dev` serve l'API e la pagina su **<http://127.0.0.1:3000>**. La UI (Preact + htm da CDN, nessun build step) è in [`frontend/`](frontend/). L'unico passo in più è la connessione a internet, per `esm.sh` e Google Fonts.
 
 ### Flusso completo (serve la chiave)
 
@@ -115,21 +115,27 @@ curl -X POST http://127.0.0.1:3000/api/variants/<variantId>/regenerate
 ## Mappa della repo
 
 ```
-src/
-  server.ts            avvio: legge le env, apre il DB, crea il client OpenAI
-  app.ts               createApp({ db, llm }): l'unico seam dei test, onError uniforme, file statici
-  http/                route per area (job-offers, channels, ads, variants) ed errori (AppError)
-  ads/                 casi d'uso degli Annunci e repository SQL
-  generation/          Brief (riuso o creazione) → contenuto → validazione → 1 retry, con generation_runs
-  llm/                 interfaccia LlmClient, client OpenAI, client finto, prompts/ versionati
-  validation/          validateContent: schema, vincoli del Formato di Canale, regole di business
-  domain/              tipi e schemi Zod (Brief, contenuto per tipo di canale, Creative)
-  catalog/             lettura di Canali e Formati di Canale dal DB
-  db/                  schema.sql, seed (jo_001 + esempi del PDF), apertura del DB
-public/                UI: index.html, app.js (Preact + htm), styles.css
-test/                  test di integrazione via app.handle(Request)
-scripts/               db-reset.ts, gen-sample.ts
-docs/                  SPEC, ADR, ai-log, prompt-log, report del giudice, campioni, cheat sheet di Elysia
-.claude/agents/        agent di progetto (prompt-engineer, channel-judge, assessment-docs)
-data/gyver.db          DB SQLite già popolato
+backend/                 API, dominio, DB e test (TypeScript su Bun). Vedi backend/README.md
+  src/
+    server.ts            avvio: legge le env, apre il DB, crea il client OpenAI
+    app.ts               createApp({ db, llm }): l'unico seam dei test, onError uniforme, file statici
+    http/                route per area (job-offers, channels, ads, variants) ed errori (AppError)
+    ads/                 casi d'uso degli Annunci e repository SQL
+    generation/          Brief (riuso o creazione) → contenuto → validazione → 1 retry, con generation_runs
+    llm/                 interfaccia LlmClient, client OpenAI, client finto, prompts/ versionati
+    validation/          validateContent: schema, vincoli del Formato di Canale, regole di business
+    domain/              tipi e schemi Zod (Brief, contenuto per tipo di canale, Creative)
+    catalog/             lettura di Canali e Formati di Canale dal DB
+    db/                  schema.sql, seed (jo_001 + esempi del PDF), apertura del DB
+  test/                  test di integrazione via app.handle(Request)
+  scripts/               db-reset.ts, gen-sample.ts
+  data/gyver.db          DB SQLite già popolato
+frontend/                UI Preact + htm senza build, servita sotto /assets. Vedi frontend/README.md
+  index.html, styles.css
+  app.js                 entry: router a hash e App
+  lib/                   preact.js (unico import CDN), api.js, format.js, errors.js
+  components/            ui.js, ad-list.js, ad-detail.js, ad-create.js
+    previews/            anteprime per Canale: whatsapp.js, social.js, indeed.js
+docs/                    SPEC, ADR, ai-log, prompt-log, report del giudice, campioni, cheat sheet di Elysia
+.claude/agents/          agent di progetto (prompt-engineer, channel-judge, assessment-docs)
 ```

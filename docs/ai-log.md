@@ -95,3 +95,6 @@ Rimandate:
 - Un solo `gen:sample` a v6. 5/6 al primo tentativo: instagram-image_text ritentato per highlightWord di più parole, poi valido. 6/6 validi, nessun fallimento dopo il retry, quindi nessuna modifica ai prompt. Campioni in `docs/samples/*@v6/`.
 - Riservatezza nei testi generati: nessun "senza indennità", nessun "85%", nessun link, email o telefono; l'indennità ha sempre la condizione (in un caso solo "a notte").
 - Togliere `doNotSay` dai prompt di canale non ha peggiorato i testi. Il Brief v6 è peggiorato per variabilità del modello: anni "3-4" in requirements (ripetuti nei testi accanto a "3-5 anni") e travel senza le trasferte di più giorni. Va ricontrollato con un secondo giro o dal giudice prima di dichiarare v6 equivalente a v5.
+
+## 2026-11-09 — Ristrutturazione backend/ + frontend/ (agent-code-writer)
+- `src/`, `test/`, `scripts/`, `data/` spostati in `backend/` e `public/` in `frontend/` con `git mv`; asset serviti sotto `/assets`; `app.js` diviso in moduli ES (`lib/`, `components/`) senza cambiare il comportamento. I percorsi citati sopra in questo log sono quelli di allora.

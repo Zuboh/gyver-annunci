@@ -14,7 +14,7 @@ L'idea guida: **prima si fissano lingua e decisioni, poi si delega in parallelo 
 | 4. Ricerca | Skill **`research`**, in un agent in background, solo su fonti primarie | Cheat sheet [`docs/research/elysia-bun.md`](docs/research/elysia-bun.md) con versioni da fissare e pitfall |
 | 5. Agent di progetto | Skill **`writing-for-agents`** | 3 agent in [`.claude/agents/`](.claude/agents/): `agent-prompt-engineer`, `agent-channel-judge`, `agent-assessment-docs` |
 | 6. Backend | **`agent-orchestrator`**, che coordina `agent-code-writer` e `agent-tester` | Contratti, poi dati/API e pipeline LLM in parallelo, poi test |
-| 7. UI | **`agent-design-system`** | [`public/`](public/): Preact + htm, token presi dal CSS pubblico di gyver.work |
+| 7. UI | **`agent-design-system`** | [`frontend/`](frontend/): Preact + htm, token presi dal CSS pubblico di gyver.work |
 | 8. Prompt | Ciclo `agent-prompt-engineer` ↔ `agent-channel-judge` | Prompt v1 → v5 (v6 dopo la review), campioni in [`docs/samples/`](docs/samples/) |
 | 9. Revisione | `agent-reviewer` e `agent-security-reviewer` in parallelo, in sola lettura | Elenco di problemi da correggere subito, vedi sotto |
 | 10. Correzioni | `agent-code-writer` | Gli 11 problemi da correggere subito, applicati con 25 test in più (81 in totale) |
@@ -42,13 +42,13 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 
 | Errore | Come è emerso | Correzione |
 |---|---|---|
-| **`t.UnionEnum` dentro `t.Optional` inietta il primo valore come default**: `?channel=indeed` diventava `status=draft` e `PATCH {}` passava | L'agent A l'ha visto filtrando l'elenco. Il tester l'ha poi blindato con una mutazione: tornare a `t.UnionEnum` fa fallire 23 test | `t.Union` di `t.Literal` ([`ads-routes.ts`](src/http/ads-routes.ts)) e test di regressione in [`test/ads-listing.test.ts`](test/ads-listing.test.ts) |
+| **`t.UnionEnum` dentro `t.Optional` inietta il primo valore come default**: `?channel=indeed` diventava `status=draft` e `PATCH {}` passava | L'agent A l'ha visto filtrando l'elenco. Il tester l'ha poi blindato con una mutazione: tornare a `t.UnionEnum` fa fallire 23 test | `t.Union` di `t.Literal` ([`ads-routes.ts`](backend/src/http/ads-routes.ts)) e test di regressione in [`backend/test/ads-listing.test.ts`](backend/test/ads-listing.test.ts) |
 | **Pitfall sbagliati nel cheat sheet.** Il pitfall 3 diceva che "un `onError` registrato prima di un plugin non copre le sue route": falso, una prova lo ha smentito. Il pitfall 13, sulla proprietà `code` degli errori, era marcato "non verificato" ed era vero. Il cheat sheet suggeriva 422 per gli errori di validazione, mentre la SPEC dice 400 | Prove eseguite dentro la repo prima di scrivere `app.ts` | `onError` prima delle route; `AppError` riconosciuto con `instanceof` prima dello switch su `code`; 400 come da SPEC. Inoltre: importare `elysia` da fuori dalla repo installa da solo Elysia 2.0 dalla cache globale, quindi le prove si lanciano dentro la repo |
-| **Benefit generalizzato** ("Indennità di 60 € per le trasferte") | Il giudice indipendente, con Fedeltà 0. La validazione lo lasciava passare | `benefitConditionIssues` in [`business-rules.ts`](src/validation/business-rules.ts) e regola nei prompt |
-| **`highlightWord` come frase** ("RAL da 32.000 a 38.000 €", "Impianti sopra i 100 kW") | Ricorrente nel prompt-log da v2 a v4 e confermato dal giudice. Le istruzioni nel prompt non bastavano | Una sola parola (`^\S+$`) e presente come parola intera negli overlay, controllato in [`validate-content.ts`](src/validation/validate-content.ts) |
+| **Benefit generalizzato** ("Indennità di 60 € per le trasferte") | Il giudice indipendente, con Fedeltà 0. La validazione lo lasciava passare | `benefitConditionIssues` in [`business-rules.ts`](backend/src/validation/business-rules.ts) e regola nei prompt |
+| **`highlightWord` come frase** ("RAL da 32.000 a 38.000 €", "Impianti sopra i 100 kW") | Ricorrente nel prompt-log da v2 a v4 e confermato dal giudice. Le istruzioni nel prompt non bastavano | Una sola parola (`^\S+$`) e presente come parola intera negli overlay, controllato in [`validate-content.ts`](backend/src/validation/validate-content.ts) |
 | `chat.completions.parse()` raccomandato dal cheat sheet | L'agent B ha visto che lancia `ZodError` e perde il testo grezzo | `create` + `zodResponseFormat` + `JSON.parse` manuale |
 | Il primo agent dello step 1 è morto per un errore di rete (ENOTFOUND) | Interruzione | Un secondo agent ha rivisto i file parziali e completato il lavoro |
-| Uno smoke test ha scritto una riga `generation_runs` nel DB versionato | Controllo del coordinatore prima del commit | `db:reset`. Regola: mai chiamare gli endpoint di generazione contro `data/gyver.db` |
+| Uno smoke test ha scritto una riga `generation_runs` nel DB versionato | Controllo del coordinatore prima del commit | `db:reset`. Regola: mai chiamare gli endpoint di generazione contro `backend/data/gyver.db` |
 | La UI di prova ha fatto due chiamate OpenAI vere anche se il brief diceva "nessuna chiave" | Bun carica da solo `.env` | Server di prova avviato con `OPENAI_API_KEY=` vuota e un DB copiato |
 | Pagina troncata dopo aver modificato `index.html` | Headless Chrome: mancava `<script>` | Il server teneva il Content-Length dell'avvio. Prima era annotato come limite; dopo la review `GET /` legge `index.html` a ogni richiesta |
 | L'anteprima WhatsApp usciva dal riquadro; l'avviso "supera l'A4" dipendeva dal font dell'anteprima | Verifica visiva | Altezza minima A4 con container query; avviso rimosso |
@@ -61,7 +61,7 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
   - `agent-prompt-engineer`: iterazioni versionate, campioni reali, voce nel prompt-log;
   - `agent-channel-judge`: rubrica di 7 criteri, sola lettura, ogni giudizio cita l'estratto;
   - `agent-assessment-docs`: la checklist della traccia per questi documenti.
-- **Script**: [`scripts/gen-sample.ts`](scripts/gen-sample.ts) genera un campione per Formato di Canale con il modello vero, su un DB in memoria; [`scripts/db-reset.ts`](scripts/db-reset.ts).
+- **Script**: [`backend/scripts/gen-sample.ts`](backend/scripts/gen-sample.ts) genera un campione per Formato di Canale con il modello vero, su un DB in memoria; [`backend/scripts/db-reset.ts`](backend/scripts/db-reset.ts).
 - **Hook di Claude Code**: un hook ha bloccato una modifica alle regole comuni mentre partiva un giro v2. Quel giro è stato rifatto, e da allora lo script stampa le issue di ogni tentativo.
 - **Playwright** in Chrome headless, installato solo nello scratchpad, per verificare la UI: elenco, filtri, anteprime, 422, 503, Versioni.
 - **MCP**: nessun server MCP compare nel log come parte del flusso.
@@ -72,7 +72,7 @@ Code review (`agent-reviewer`) e security review (`agent-security-reviewer`) son
 
 | Problema | Correzione |
 |---|---|
-| L'`idleTimeout` di 30 s di Elysia chiudeva il socket durante la catena Brief + Variante | `listen({ hostname, idleTimeout: 255 })` in [`server.ts`](src/server.ts), con bind su `127.0.0.1` per default (`HOST`) |
+| L'`idleTimeout` di 30 s di Elysia chiudeva il socket durante la catena Brief + Variante | `listen({ hostname, idleTimeout: 255 })` in [`server.ts`](backend/src/server.ts), con bind su `127.0.0.1` per default (`HOST`) |
 | Un Annuncio vuoto tornava `201` quando tutti gli Angoli fallivano | Prima si genera, poi si salva in una transazione; se falliscono tutti, niente salvataggio e 502 o 503 |
 | Ripristinare una Variante poteva duplicare un Angolo attivo | Controllo anche al ripristino e indice unico parziale `variants_active_angle` |
 | `GET /api/job-offers` esponeva l'intero payload interno | Solo `{ id, title, companyName, status }` nell'elenco |

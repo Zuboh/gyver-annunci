@@ -4,7 +4,7 @@
 
 - **TypeScript su Bun.** Un solo runtime fa da server, test runner (`bun test`), driver SQLite (`bun:sqlite`) e gestore di pacchetti, ed esegue TypeScript senza build. Chi valuta installa Bun e lancia quattro comandi.
 - **Elysia fissato a `1.4.31`, non 2.0.** Il giorno del setup il tag `latest` di npm puntava a `2.0.0-rc.4`, una riscrittura appena uscita. La 1.4 è l'ultima stabile ed è quella documentata nel cheat sheet ([`docs/research/elysia-bun.md`](docs/research/elysia-bun.md)). Tutte le dipendenze hanno la versione esatta in [`package.json`](package.json). Serve **Bun ≥ 1.2** (peer `@types/bun >= 1.2.0` di Elysia 1.4.31); il progetto è testato con Bun 1.4.4.
-- **SQL esplicito, niente ORM.** Il modello dati è la parte più valutata, e [`schema.sql`](src/db/schema.sql) lo mostra con vincoli, FK composta e trigger leggibili.
+- **SQL esplicito, niente ORM.** Il modello dati è la parte più valutata, e [`schema.sql`](backend/src/db/schema.sql) lo mostra con vincoli, FK composta e trigger leggibili.
 - **Zod come unica fonte della forma.** Lo stesso schema vincola OpenAI (`zodResponseFormat`) e valida l'output LLM e le Versioni manuali. TypeBox (`t`) resta solo per gli input HTTP, che è il percorso nativo di Elysia.
 - **UI senza build** (Preact + htm da `esm.sh` con versione fissata), servita dallo stesso server: nessuna seconda toolchain.
 - **Divisione per responsabilità** (ads, generation, llm, validation, catalog) con un solo seam di test, `createApp({ db, llm })`. Dettagli in [architecture.md](architecture.md).
@@ -17,12 +17,12 @@
 
 ## Scelte tecniche
 
-- **`chat.completions.create` invece di `.parse()`.** `.parse()` lancia `ZodError` su un output non conforme e perde il testo grezzo. Con `create` + `zodResponseFormat` + `JSON.parse` ogni risposta arriva alla validazione, finisce in `generation_runs` e alimenta il retry ([`openai-llm-client.ts`](src/llm/openai-llm-client.ts)). Si rinuncia al tipo inferito dall'SDK, ma la validazione Zod a valle lo ricostruisce.
+- **`chat.completions.create` invece di `.parse()`.** `.parse()` lancia `ZodError` su un output non conforme e perde il testo grezzo. Con `create` + `zodResponseFormat` + `JSON.parse` ogni risposta arriva alla validazione, finisce in `generation_runs` e alimenta il retry ([`openai-llm-client.ts`](backend/src/llm/openai-llm-client.ts)). Si rinuncia al tipo inferito dall'SDK, ma la validazione Zod a valle lo ricostruisce.
 - **Niente generazione di immagini.** La Variante ha una **Creative**: overlay, parola evidenziata, soggetto della foto e dimensioni, resa come anteprima HTML. Generare il file avrebbe aggiunto un secondo fornitore, costi e tempi, senza toccare il modello dati. La traccia valuta il contenuto e il formato.
 - **Fallimento parziale = `201` con `failedAngles`.** Con più Angoli, l'Annuncio e le Varianti riuscite vengono salvati e la risposta elenca gli Angoli falliti con lo stesso corpo d'errore dell'API. Un 502 avrebbe buttato via il lavoro riuscito. Se falliscono il Brief o tutti gli Angoli, invece, non si salva nulla e la risposta è 502 o 503: un Annuncio senza Varianti non esiste.
 - **Errori di validazione dell'input → 400**, come da SPEC, non il 422 di default di Elysia. Il 422 resta per "combinazione non ammessa" e "contenuto non conforme".
-- **Le regole di formulazione e di sicurezza valgono solo con `origin = 'llm'`** ([`validate-content.ts`](src/validation/validate-content.ts)). Sono la forma della retribuzione, la condizione dell'indennità, le condizioni interne e i contatti. Gli esempi del PDF nel seed dicono "RAL iniziale da €38'000 + indennità", e applicarle anche alle Versioni manuali avrebbe reso il seed non valido. Una modifica manuale è una scelta editoriale e ne risponde chi la fa: una persona può quindi scrivere a mano "senza indennità" o un numero di telefono. Le regole su indirizzo, cifre fuori range e vincoli del formato valgono per tutti.
-- **I limiti di lunghezza sono scelte editoriali**, non i limiti delle piattaforme: caption Instagram 2200, TikTok 150, badge WhatsApp 50, bullet Indeed 250. Sono dati in `channel_formats` ([`seed-data.ts`](src/db/seed-data.ts)), quindi si cambiano senza codice.
+- **Le regole di formulazione e di sicurezza valgono solo con `origin = 'llm'`** ([`validate-content.ts`](backend/src/validation/validate-content.ts)). Sono la forma della retribuzione, la condizione dell'indennità, le condizioni interne e i contatti. Gli esempi del PDF nel seed dicono "RAL iniziale da €38'000 + indennità", e applicarle anche alle Versioni manuali avrebbe reso il seed non valido. Una modifica manuale è una scelta editoriale e ne risponde chi la fa: una persona può quindi scrivere a mano "senza indennità" o un numero di telefono. Le regole su indirizzo, cifre fuori range e vincoli del formato valgono per tutti.
+- **I limiti di lunghezza sono scelte editoriali**, non i limiti delle piattaforme: caption Instagram 2200, TikTok 150, badge WhatsApp 50, bullet Indeed 250. Sono dati in `channel_formats` ([`seed-data.ts`](backend/src/db/seed-data.ts)), quindi si cambiano senza codice.
 
 ## Interpretazione delle parti ambigue
 
@@ -44,8 +44,8 @@
 ## Limiti tecnici noti
 
 - **Transizioni di Stato libere, a parte due guardie**: un Annuncio archiviato è congelato (422 `AD_ARCHIVED`), e `ready`/`published` richiedono una Variante attiva. Per il resto si passa da uno Stato all'altro liberamente, anche uscendo da `archived`. La guardia vale solo quando si imposta lo Stato: **scartare l'ultima Variante attiva di un Annuncio pubblicato è ancora ammesso**.
-- **Il Luogo resta modificabile su un Annuncio pubblicato** ([`ad-use-cases.ts`](src/ads/ad-use-cases.ts) `updateAd`).
-- **Gli errori OpenAI non mappati diventano 500.** Chiave, rete, 404, 429 e 5xx diventano 503; altri, per esempio un 400 dovuto a un errore di schema, finiscono nel 500 generico ([`openai-llm-client.ts`](src/llm/openai-llm-client.ts)).
+- **Il Luogo resta modificabile su un Annuncio pubblicato** ([`ad-use-cases.ts`](backend/src/ads/ad-use-cases.ts) `updateAd`).
+- **Gli errori OpenAI non mappati diventano 500.** Chiave, rete, 404, 429 e 5xx diventano 503; altri, per esempio un 400 dovuto a un errore di schema, finiscono nel 500 generico ([`openai-llm-client.ts`](backend/src/llm/openai-llm-client.ts)).
 - **`generation_runs` non raggruppa i tentativi.** `attempt` riparte da 1 a ogni chiamata, `ref` è l'Annuncio e non la Variante, e manca un `request_id`: tentativi di chiamate diverse si distinguono solo per data. Inoltre `ref` può puntare a un Annuncio mai salvato, quando tutti gli Angoli falliscono, perché il riferimento è polimorfico e senza FK.
 - **L'indice `variants_active_angle` usa `lower()` di SQLite, che è solo ASCII**, mentre il controllo nel codice usa `toLowerCase()`. Con lettere accentate in maiuscolo la rete di sicurezza del DB è più debole del codice.
 - **CDN senza SRI**: Preact/htm da `esm.sh` (versione fissata) e Google Fonts sono caricati senza Subresource Integrity.
