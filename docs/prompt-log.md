@@ -131,3 +131,26 @@ Modifiche alla validazione (solo output LLM, test in `test/security.test.ts`):
 - Verificato sui campioni v5: nessun falso positivo. Nei Brief v5 reali le voci di `doNotSay` non hanno il testo tra virgolette richiesto dal prompt, quindi il controllo sulle citazioni lì non scatta; le due condizioni reali di jo_001 sono coperte dalle prime due regole.
 
 Rischio: il cambio della regola comune su doNotSay può cambiare l'output; da verificare con un giro `gen:sample` + giudice prima di considerare v6 equivalente a v5.
+
+### v6, risultati del giro reale (1 giro `gen:sample`, gpt-4o-mini)
+
+| Canale × Formato | Angolo | Esito |
+|---|---|---|
+| indeed-text | carriera | ok al primo tentativo |
+| instagram-image | stipendio | ok al primo tentativo |
+| instagram-image_text | grandi impianti | retry: `creative.highlightWord` "deve essere una sola parola"; ok al secondo |
+| tiktok-image | carriera | ok al primo tentativo |
+| whatsapp-image_text | stipendio | ok al primo tentativo |
+| whatsapp-text | grandi impianti | ok al primo tentativo |
+
+5/6 al primo tentativo, 6/6 validi dopo il retry, nessun fallimento: nessuna modifica ai prompt.
+
+Riservatezza (controllo sui campi `content`): nessun "senza indennità", nessun "85%", nessun URL, email o telefono, nessuna prima persona dell'azienda. L'indirizzo esatto compare solo in `address` di Indeed. "senza indennità" e "85%" restano solo in `brief.content.doNotSay`, che i prompt di canale non ricevono più. L'indennità ha sempre la sua condizione; in whatsapp-image_text è accorciata a `"Indennità di 60 € lordi a notte"` (resta "a notte", manca "trasferte di più giorni"), e la regola la accetta perché basta una condizione.
+
+Confronto con v5 (togliere `doNotSay` dai prompt di canale):
+- Nessun peggioramento riconducibile alla rimozione: nessuna condizione interna nei testi, trasferte sempre citate in modo neutro, nessuna condizione economica inventata. I canali non possono più ripetere i fatti interni perché non li ricevono.
+- Peggioramenti dovuti alla variabilità del Brief (`brief@v6`, che rispetto a v5 aggiunge solo la riga anti-injection):
+  - `requirements` riporta `"Hai maturato almeno 3-4 anni di esperienza..."`, contro la regola "anni solo in experience". Indeed e WhatsApp lo ripetono (`"almeno 3-4 anni"`) accanto a `experience: "3-5 anni"`.
+  - `travel` diventa `"Trasferte giornaliere frequenti"` e perde le trasferte di più giorni. In whatsapp-image_text la sezione cita solo le trasferte giornaliere accanto a "Indennità di 60 € lordi a notte": il nesso indennità ↔ trasferte di più giorni si perde, lo stesso rischio che il giudice ha segnalato su v4.
+- Migliorato: Brief `responsibilities` alla seconda persona corretta (`"Effettui"`). Indeed però scrive ancora `"Effetti"`, e WhatsApp mescola `"Eseguirai"`.
+- Invariati da v5: TikTok (carriera) con `#carriera` e RAL negli overlay; highlightWord come frase al primo tentativo (instagram-image_text). Titolo Indeed poco chiaro: `"costruzione di impianti diversi"`.

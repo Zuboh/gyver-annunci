@@ -90,3 +90,8 @@ Rimandate:
 - `request_id` e colonna `angle` in `generation_runs` (opzionale): richiede una migrazione delle colonne sui DB esistenti, perché lo schema è applicato con `CREATE TABLE IF NOT EXISTS`.
 - Documentate come tradeoff, non corrette: nessuna autenticazione; CDN senza SRI; Luogo modificabile su un Annuncio pubblicato; errori OpenAI non mappati → 500; transizioni di Stato libere oltre alle guardie sopra; numeri di jo_001 negli esempi dei prompt.
 - Notate e non corrette: scartare l'ultima Variante attiva di un Annuncio pubblicato è ammesso (la guardia vale solo quando si imposta lo Stato); `lower()` di SQLite nell'indice è solo ASCII, mentre il controllo nel codice usa `toLowerCase()`.
+
+## 2026-11-09 — Giro reale dei prompt v6 (agent-prompt-engineer)
+- Un solo `gen:sample` a v6. 5/6 al primo tentativo: instagram-image_text ritentato per highlightWord di più parole, poi valido. 6/6 validi, nessun fallimento dopo il retry, quindi nessuna modifica ai prompt. Campioni in `docs/samples/*@v6/`.
+- Riservatezza nei testi generati: nessun "senza indennità", nessun "85%", nessun link, email o telefono; l'indennità ha sempre la condizione (in un caso solo "a notte").
+- Togliere `doNotSay` dai prompt di canale non ha peggiorato i testi. Il Brief v6 è peggiorato per variabilità del modello: anni "3-4" in requirements (ripetuti nei testi accanto a "3-5 anni") e travel senza le trasferte di più giorni. Va ricontrollato con un secondo giro o dal giudice prima di dichiarare v6 equivalente a v5.
