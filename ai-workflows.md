@@ -15,9 +15,11 @@ L'idea guida: **prima si fissano lingua e decisioni, poi si delega in parallelo 
 | 5. Agent di progetto | Skill **`writing-for-agents`** | 3 agent in [`.claude/agents/`](.claude/agents/): `agent-prompt-engineer`, `agent-channel-judge`, `agent-assessment-docs` |
 | 6. Backend | **`agent-orchestrator`**, che coordina `agent-code-writer` e `agent-tester` | Contratti, poi dati/API e pipeline LLM in parallelo, poi test |
 | 7. UI | **`agent-design-system`** | [`public/`](public/): Preact + htm, token presi dal CSS pubblico di gyver.work |
-| 8. Prompt | Ciclo `agent-prompt-engineer` ↔ `agent-channel-judge` | Prompt v1 → v5, campioni in [`docs/samples/`](docs/samples/) |
-| 9. Revisione | Code review e security review in parallelo | In corso, vedi sotto |
-| 10. Documenti | `agent-assessment-docs` | I cinque documenti della traccia, con i comandi del README provati su una copia pulita |
+| 8. Prompt | Ciclo `agent-prompt-engineer` ↔ `agent-channel-judge` | Prompt v1 → v5 (v6 dopo la review), campioni in [`docs/samples/`](docs/samples/) |
+| 9. Revisione | `agent-reviewer` e `agent-security-reviewer` in parallelo, in sola lettura | Elenco di problemi da correggere subito, vedi sotto |
+| 10. Correzioni | `agent-code-writer` | Gli 11 problemi da correggere subito, applicati con 25 test in più (81 in totale) |
+| 11. Riconvalida | `agent-prompt-engineer` con il modello reale | Prompt v6, campioni in `docs/samples/*@v6/` |
+| 12. Documenti | `agent-assessment-docs` | I cinque documenti della traccia, con i comandi del README provati su una copia pulita |
 
 Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocation`, quindi le ha lanciate l'umano. Il modello non può saltare la fase di modellazione da solo.
 
@@ -32,7 +34,8 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 
 - **v1 → v4**: ogni versione ha passato **5/6** campioni al primo tentativo, e il fallimento cambiava campione: `highlightWord` fuori dagli overlay in v1 e v4, caption TikTok oltre 150 caratteri in v2 e v3. Il tetto di 3 iterazioni è stato raggiunto senza 6/6.
 - **Giudice su v4** ([`docs/judge-report-v4.md`](docs/judge-report-v4.md)): 5/6 accettati. **whatsapp-image_text è respinto con Fedeltà = 0.** "Indennità di 60 € per le trasferte" generalizza un'indennità che la Job Offer prevede solo a notte nelle trasferte di più giorni. Il rischio vero non era la fuga di dati riservati, che reggeva ovunque: era un benefit parafrasato tanto largo da contraddire le condizioni nascoste.
-- **v5**: le 5 correzioni prioritarie del giudice sono diventate prompt **e** codice: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola, Angoli allineati ai sellingPoints. Due giri, entrambi **6/6** al primo tentativo. Restano alcuni limiti, elencati in [prompts.md](prompts.md).
+- **v5**: le 5 correzioni prioritarie del giudice sono diventate prompt **e** codice: condizione dell'indennità, forma della retribuzione, `highlightWord` di una parola, Angoli allineati ai sellingPoints. Due giri, entrambi **6/6** al primo tentativo.
+- **v6**, dopo la security review: `doNotSay` tolto dai prompt di canale e riga anti-injection nel Brief. Un giro reale: 5/6 al primo tentativo e 6/6 dopo il retry. Con un giro per versione e una sola Job Offer, le differenze di un campione non sono significative. I limiti residui sono in [prompts.md](prompts.md).
 - Costo stimato di tutti i giri: meno di 0,05 $.
 
 ## Cosa l'AI ha sbagliato e come è stato scoperto
@@ -47,7 +50,7 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 | Il primo agent dello step 1 è morto per un errore di rete (ENOTFOUND) | Interruzione | Un secondo agent ha rivisto i file parziali e completato il lavoro |
 | Uno smoke test ha scritto una riga `generation_runs` nel DB versionato | Controllo del coordinatore prima del commit | `db:reset`. Regola: mai chiamare gli endpoint di generazione contro `data/gyver.db` |
 | La UI di prova ha fatto due chiamate OpenAI vere anche se il brief diceva "nessuna chiave" | Bun carica da solo `.env` | Server di prova avviato con `OPENAI_API_KEY=` vuota e un DB copiato |
-| Pagina troncata dopo aver modificato `index.html` | Headless Chrome: mancava `<script>` | Il server tiene il Content-Length dell'avvio, quindi va riavviato. Annotato in [tradeoffs.md](tradeoffs.md) |
+| Pagina troncata dopo aver modificato `index.html` | Headless Chrome: mancava `<script>` | Il server teneva il Content-Length dell'avvio. Prima era annotato come limite; dopo la review `GET /` legge `index.html` a ogni richiesta |
 | L'anteprima WhatsApp usciva dal riquadro; l'avviso "supera l'A4" dipendeva dal font dell'anteprima | Verifica visiva | Altezza minima A4 con container query; avviso rimosso |
 
 ## Strumenti
@@ -63,6 +66,19 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 - **Playwright** in Chrome headless, installato solo nello scratchpad, per verificare la UI: elenco, filtri, anteprime, 422, 503, Versioni.
 - **MCP**: nessun server MCP compare nel log come parte del flusso.
 
-## Revisione in corso
+## Revisione e correzioni
 
-Una code review e una security review sono in corso in parallelo, in sola lettura. I loro risultati, e le eventuali correzioni, verranno aggiunti qui.
+Code review (`agent-reviewer`) e security review (`agent-security-reviewer`) sono girate **in parallelo e in sola lettura** sul codice completo. I problemi principali:
+
+| Problema | Correzione |
+|---|---|
+| L'`idleTimeout` di 30 s di Elysia chiudeva il socket durante la catena Brief + Variante | `listen({ hostname, idleTimeout: 255 })` in [`server.ts`](src/server.ts), con bind su `127.0.0.1` per default (`HOST`) |
+| Un Annuncio vuoto tornava `201` quando tutti gli Angoli fallivano | Prima si genera, poi si salva in una transazione; se falliscono tutti, niente salvataggio e 502 o 503 |
+| Ripristinare una Variante poteva duplicare un Angolo attivo | Controllo anche al ripristino e indice unico parziale `variants_active_angle` |
+| `GET /api/job-offers` esponeva l'intero payload interno | Solo `{ id, title, companyName, status }` nell'elenco |
+| `doNotSay` arrivava al prompt del copywriter: il prompt riceveva proprio i fatti da nascondere | Tolto dai prompt di canale; `internalFactIssues` sull'output LLM e sul Brief |
+| Prompt injection dai testi della Job Offer | Riga anti-injection nel prompt del Brief; `contactIssues` blocca link, email e telefoni nell'output |
+
+Insieme a questi: guardie di Stato (`AD_ARCHIVED`, `AD_HAS_NO_ACTIVE_VARIANT`), `GET /` letto a ogni richiesta, cifre mensili e benefit esclusi dal controllo della RAL e `encodeURIComponent` sugli id nella UI. In tutto `agent-code-writer` ha applicato gli **11 problemi da correggere subito**, con **25 test in più** (da 56 a 81), tutti attraverso `createApp` e il client finto. È stato rimandato `request_id` in `generation_runs`, perché richiede una migrazione delle colonne sui DB esistenti. Gli altri problemi rimandati sono documentati in [tradeoffs.md](tradeoffs.md). Il dettaglio è in [`docs/ai-log.md`](docs/ai-log.md).
+
+La modifica ai prompt era di sicurezza, non di qualità, quindi **v6 è stata riconvalidata con il modello reale**: un giro `gen:sample`, 5/6 al primo tentativo, 6/6 dopo il retry, riservatezza pulita. Il Brief però è peggiorato per variabilità del modello: anni nei requirements e trasferte di più giorni perse in `travel`. Il dettaglio è in [prompts.md](prompts.md).

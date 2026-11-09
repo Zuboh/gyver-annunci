@@ -19,9 +19,9 @@
 
 - **`chat.completions.create` invece di `.parse()`.** `.parse()` lancia `ZodError` su un output non conforme e perde il testo grezzo. Con `create` + `zodResponseFormat` + `JSON.parse` ogni risposta arriva alla validazione, finisce in `generation_runs` e alimenta il retry ([`openai-llm-client.ts`](src/llm/openai-llm-client.ts)). Si rinuncia al tipo inferito dall'SDK, ma la validazione Zod a valle lo ricostruisce.
 - **Niente generazione di immagini.** La Variante ha una **Creative**: overlay, parola evidenziata, soggetto della foto e dimensioni, resa come anteprima HTML. Generare il file avrebbe aggiunto un secondo fornitore, costi e tempi, senza toccare il modello dati. La traccia valuta il contenuto e il formato.
-- **Fallimento parziale = `201` con `failedAngles`.** Con più Angoli, l'Annuncio e le Varianti riuscite restano salvati e la risposta elenca gli Angoli falliti con lo stesso corpo d'errore dell'API. Un 502 avrebbe buttato via il lavoro riuscito. Se fallisce il Brief, invece, non si salva nulla.
+- **Fallimento parziale = `201` con `failedAngles`.** Con più Angoli, l'Annuncio e le Varianti riuscite vengono salvati e la risposta elenca gli Angoli falliti con lo stesso corpo d'errore dell'API. Un 502 avrebbe buttato via il lavoro riuscito. Se falliscono il Brief o tutti gli Angoli, invece, non si salva nulla e la risposta è 502 o 503: un Annuncio senza Varianti non esiste.
 - **Errori di validazione dell'input → 400**, come da SPEC, non il 422 di default di Elysia. Il 422 resta per "combinazione non ammessa" e "contenuto non conforme".
-- **Le regole sulla forma della retribuzione e sulla condizione dell'indennità valgono solo con `origin = 'llm'`** ([`validate-content.ts`](src/validation/validate-content.ts)). Gli esempi del PDF nel seed dicono "RAL iniziale da €38'000 + indennità", e applicarle anche alle Versioni manuali avrebbe reso il seed non valido. Una modifica manuale è una scelta editoriale e ne risponde chi la fa. Le regole su indirizzo, cifre fuori range e vincoli del formato valgono per tutti.
+- **Le regole di formulazione e di sicurezza valgono solo con `origin = 'llm'`** ([`validate-content.ts`](src/validation/validate-content.ts)). Sono la forma della retribuzione, la condizione dell'indennità, le condizioni interne e i contatti. Gli esempi del PDF nel seed dicono "RAL iniziale da €38'000 + indennità", e applicarle anche alle Versioni manuali avrebbe reso il seed non valido. Una modifica manuale è una scelta editoriale e ne risponde chi la fa: una persona può quindi scrivere a mano "senza indennità" o un numero di telefono. Le regole su indirizzo, cifre fuori range e vincoli del formato valgono per tutti.
 - **I limiti di lunghezza sono scelte editoriali**, non i limiti delle piattaforme: caption Instagram 2200, TikTok 150, badge WhatsApp 50, bullet Indeed 250. Sono dati in `channel_formats` ([`seed-data.ts`](src/db/seed-data.ts)), quindi si cambiano senza codice.
 
 ## Interpretazione delle parti ambigue
@@ -36,30 +36,34 @@
 
 - Gestione delle Job Offer: c'è solo `jo_001`, dal seed.
 - Pubblicazione reale, sincronizzazione degli Stati e metriche delle Varianti.
-- Autenticazione e attribuzione delle modifiche.
+- **Autenticazione** e attribuzione delle modifiche. È uno strumento locale: il server ascolta su `127.0.0.1` per default, e con `HOST=0.0.0.0` chiunque in rete può leggere e modificare.
+- **Migrazioni**: lo schema è applicato con `CREATE TABLE IF NOT EXISTS`, quindi una colonna nuova richiede `db:reset`.
 - **UI**: il contenuto si modifica **solo come JSON**, senza editor a campi. **Il Brief non si vede.** Del Luogo si modifica solo l'etichetta. Il 502 non è stato provato dal vivo.
 - I tentativi di generazione non sono esposti dall'API né dalla UI.
 
 ## Limiti tecnici noti
 
-- **Nessun controllo sulle transizioni di Stato**: si passa da `archived` a `draft` o da `draft` a `published` liberamente.
-- **Niente impedisce di rigenerare o aggiungere Varianti a un Annuncio archiviato** (`regenerateVariant` e `addVariant` in [`ad-use-cases.ts`](src/ads/ad-use-cases.ts) non guardano lo Stato).
-- **Uno stipendio mensile viene confrontato con la RAL.** `salaryIssues` tratta ogni cifra in € ≥ 1.000 come annuale, quindi "2.500 € al mese" risulta fuori range ([`business-rules.ts`](src/validation/business-rules.ts)).
-- **`generation_runs.attempt` riparte da 1 a ogni chiamata.** Le rigenerazioni della stessa Variante hanno tutte attempt 1-2 e `ref` è l'Annuncio, non la Variante, quindi i tentativi di chiamate diverse si distinguono solo per data.
-- **`GET /` tiene un Content-Length vecchio dopo una modifica a `index.html`.** `file()` di Elysia legge la dimensione all'avvio, e nemmeno `bun --watch` se ne accorge: bisogna riavviare il server. In produzione non succede.
-- **`doNotSay` è rispettato solo dal prompt**; l'indirizzo e la retribuzione sono riconosciuti con regex tarate su `jo_001`.
-- La regola sull'indennità chiede **almeno una** delle condizioni, non tutte ("multi-giorno" senza "a notte" passa).
-- Le regole "hashtag diverso dall'Angolo" e "RAL negli overlay solo con l'Angolo stipendio" sono solo nel prompt. Restano errori di italiano in v5 (vedi [prompts.md](prompts.md)).
+- **Transizioni di Stato libere, a parte due guardie**: un Annuncio archiviato è congelato (422 `AD_ARCHIVED`), e `ready`/`published` richiedono una Variante attiva. Per il resto si passa da uno Stato all'altro liberamente, anche uscendo da `archived`. La guardia vale solo quando si imposta lo Stato: **scartare l'ultima Variante attiva di un Annuncio pubblicato è ancora ammesso**.
+- **Il Luogo resta modificabile su un Annuncio pubblicato** ([`ad-use-cases.ts`](src/ads/ad-use-cases.ts) `updateAd`).
+- **Gli errori OpenAI non mappati diventano 500.** Chiave, rete, 404, 429 e 5xx diventano 503; altri, per esempio un 400 dovuto a un errore di schema, finiscono nel 500 generico ([`openai-llm-client.ts`](src/llm/openai-llm-client.ts)).
+- **`generation_runs` non raggruppa i tentativi.** `attempt` riparte da 1 a ogni chiamata, `ref` è l'Annuncio e non la Variante, e manca un `request_id`: tentativi di chiamate diverse si distinguono solo per data. Inoltre `ref` può puntare a un Annuncio mai salvato, quando tutti gli Angoli falliscono, perché il riferimento è polimorfico e senza FK.
+- **L'indice `variants_active_angle` usa `lower()` di SQLite, che è solo ASCII**, mentre il controllo nel codice usa `toLowerCase()`. Con lettere accentate in maiuscolo la rete di sicurezza del DB è più debole del codice.
+- **CDN senza SRI**: Preact/htm da `esm.sh` (versione fissata) e Google Fonts sono caricati senza Subresource Integrity.
+- **Validazione euristica**: indirizzo, retribuzione, condizioni interne e contatti sono riconosciuti con regex tarate su `jo_001`.
+- **I prompt contengono i numeri di `jo_001`** (38.000 €, 1.700 dipendenti) come esempi: con un'altra Job Offer possono trascinare cifre sbagliate.
+- La regola sull'indennità chiede **almeno una** delle condizioni, non tutte. In v6 "60 € lordi a notte" senza "trasferte di più giorni" passa.
+- Le regole "hashtag diverso dall'Angolo", "RAL negli overlay solo con l'Angolo stipendio" e "anni solo in experience" sono solo nel prompt. Restano errori di italiano (vedi [prompts.md](prompts.md)).
+- **La qualità dei prompt è misurata su un solo giro per versione** e una sola Job Offer: le differenze tra versioni non sono statisticamente significative.
 
 ## Con un giorno in più
 
 In ordine di priorità:
 
-1. **Applicare i risultati della code review e della security review** in corso.
-2. **Una macchina a stati per lo Stato dell'Annuncio** e il blocco della generazione sugli Annunci archiviati.
-3. **Portare nel codice le regole che oggi sono solo nel prompt**: hashtag diverso dall'Angolo, RAL negli overlay solo con l'Angolo stipendio, tutte le condizioni dell'indennità, voci di `doNotSay` cercate nel testo.
-4. **Un giudice automatico** (rubrica di `agent-channel-judge`) su ogni generazione o in CI sui campioni, con un controllo grammaticale per errori come "Effetti" e "in cantiera".
-5. **Una retribuzione con periodo** (annuale o mensile) nella Job Offer e nella validazione.
-6. **`generation_runs` per operazione**: un id di operazione, `ref` alla Variante, e l'esposizione nell'API e nella UI.
-7. **UI**: editor a campi per canale, vista del Brief con rigenerazione, modifica completa del Luogo.
+1. **Un set di valutazione**: più Job Offer (tipi di ruolo diversi, con e senza RAL e trasferte) × N giri per versione, con il giudice automatico (rubrica di `agent-channel-judge`) e un controllo grammaticale. Così il confronto tra versioni dei prompt diventa misurabile.
+2. **Tutte le condizioni dei benefit, non almeno una**, e nel codice anche le regole oggi solo nel prompt: hashtag diverso dall'Angolo, RAL negli overlay solo con l'Angolo stipendio, anni solo in experience. Poi i numeri di `jo_001` tolti dagli esempi dei prompt.
+3. **`request_id` in `generation_runs`**, con `ref` alla Variante e l'esposizione dei tentativi nell'API e nella UI.
+4. **Autenticazione** e attribuzione delle Versioni manuali a una persona.
+5. **Migrazioni versionate** dello schema, al posto di `CREATE TABLE IF NOT EXISTS` + `db:reset`.
+6. **Dipendenza della UI copiata nella repo** (Preact + htm), invece della CDN senza SRI.
+7. **Stati e UI**: guardia anche sullo scarto dell'ultima Variante attiva di un Annuncio pubblicato; editor a campi per canale; vista del Brief; modifica completa del Luogo.
 8. **Rendering della Creative in PNG** da un template HTML, per avere un file pronto per il designer.
