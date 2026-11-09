@@ -20,6 +20,6 @@ Campi:
 - callToAction: invito breve, es. "Candidati ora", oppure null.`
 
 export const socialAdPrompt: VariantPrompt = {
-  version: 'social_ad@v5',
+  version: 'social_ad@v6',
   build: (input) => ({ system, user: variantUserMessage(input) }),
 }

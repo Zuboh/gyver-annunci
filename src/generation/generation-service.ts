@@ -14,6 +14,7 @@ import type {
 } from '../domain/types'
 import { generationFailed, llmUnavailable, notFound } from '../http/errors'
 import { LlmUnavailableError, type LlmClient, type LlmResult } from '../llm/llm-client'
+import { collectTextFields, internalFactIssues } from '../validation/business-rules'
 import { validateContent } from '../validation/validate-content'
 import { findCurrentBrief, insertBrief } from './brief-store'
 import { recordRun } from './generation-runs'
@@ -67,7 +68,13 @@ const italianErrors = z.locales.it().localeError
 
 function checkBrief(content: unknown): Checked<BriefContent> {
   const parsed = briefContentSchema.safeParse(content, { error: italianErrors })
-  if (parsed.success) return { ok: true, content: parsed.data }
+  if (parsed.success) {
+    // Fields the channel prompts turn into copy must not carry what doNotSay holds back.
+    const { companyPitch, benefits, sellingPoints, travel } = parsed.data
+    const fields = collectTextFields({ companyPitch, benefits, sellingPoints, travel })
+    const issues = internalFactIssues(fields, parsed.data.doNotSay)
+    return issues.length > 0 ? { ok: false, issues } : { ok: true, content: parsed.data }
+  }
   return {
     ok: false,
     issues: parsed.error.issues.map((i) => ({ path: i.path.map(String).join('.'), message: i.message })),
@@ -158,7 +165,7 @@ export function createGenerationService(deps: { db: Database; llm: LlmClient }):
           ...(previousIssues && { previousIssues }),
         }),
       (content): Checked<ChannelContent> => {
-        const result = validateContent(content, { channel, channelFormat, jobOffer, origin: 'llm' })
+        const result = validateContent(content, { channel, channelFormat, jobOffer, origin: 'llm', brief: brief.content })
         return result.ok ? result : { ok: false, issues: result.issues }
       },
     )

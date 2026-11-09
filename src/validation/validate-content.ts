@@ -4,6 +4,7 @@
 import { z } from 'zod'
 import { contentSchemaFor } from '../domain/content-schemas'
 import type {
+  BriefContent,
   Channel,
   ChannelContent,
   ChannelFormat,
@@ -15,6 +16,8 @@ import type {
 import {
   benefitConditionIssues,
   collectTextFields,
+  contactIssues,
+  internalFactIssues,
   salaryIssues,
   salaryWordingIssues,
   streetAddressIssues,
@@ -26,10 +29,13 @@ export interface ValidationContext {
   /** Source of truth for business rules (salary coherence, street address to forbid). */
   jobOffer: JobOffer
   /**
-   * Who produced the content (default "manual"). LLM output also gets the stricter wording
-   * rules (salary forms, allowance conditions); manual Versions are an editorial choice.
+   * Who produced the content (default "manual"). LLM output also gets the stricter rules
+   * (salary forms, allowance conditions, internal facts, contact data); manual Versions are an
+   * editorial choice.
    */
   origin?: 'llm' | 'manual'
+  /** Brief the LLM output was generated from: its doNotSay quotes must not appear in the content. */
+  brief?: BriefContent
 }
 
 export type ValidationResult =
@@ -63,7 +69,12 @@ export function validateContent(content: unknown, ctx: ValidationContext): Valid
     ...streetAddressIssues(fields, ctx.channel, ctx.jobOffer.payload.location),
     ...salaryIssues(fields, ctx.jobOffer.payload),
     ...(ctx.origin === 'llm'
-      ? [...salaryWordingIssues(fields, ctx.jobOffer.payload), ...benefitConditionIssues(fields, ctx.jobOffer.payload)]
+      ? [
+          ...salaryWordingIssues(fields, ctx.jobOffer.payload),
+          ...benefitConditionIssues(fields, ctx.jobOffer.payload),
+          ...internalFactIssues(fields, ctx.brief?.doNotSay),
+          ...contactIssues(fields),
+        ]
       : []),
   ]
   return issues.length > 0 ? { ok: false, issues } : { ok: true, content: parsed.data }

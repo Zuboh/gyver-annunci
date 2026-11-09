@@ -22,6 +22,6 @@ Campi:
 - creative: solo se il formato prevede un'immagine, altrimenti null.`
 
 export const jobBoardPrompt: VariantPrompt = {
-  version: 'job_board@v5',
+  version: 'job_board@v6',
   build: (input) => ({ system, user: variantUserMessage(input) }),
 }

@@ -183,3 +183,54 @@ export function benefitConditionIssues(fields: TextField[], offer: JobOfferPaylo
       message: `Indennità senza la sua condizione: la Job Offer la prevede solo per ${labels}. Scrivila con la condizione o non citarla.`,
     }))
 }
+
+// ---------------------------------------------------------------------------
+// Internal Job Offer facts and contact data (LLM output only, plus the Brief check in the
+// generation service). Defence in depth: channel prompts never receive doNotSay, and these
+// rules reject the leaks that matter most even if the Brief or the model lets them through.
+// ---------------------------------------------------------------------------
+
+/** Unfavourable conditions that are internal by nature: no allowance, pay cut to a percentage. */
+const INTERNAL_CONDITIONS = [/senza indennit/i, /\d+\s?%.{0,30}(?:paga|retribuz)/i]
+/** Quoted Job Offer text in a doNotSay item: ("..."), "...", «...», “...”. */
+const QUOTED = /["“«]([^"”»]+)["”»]/g
+/** Shorter quotes are too generic to tell a leak from an ordinary phrase. */
+const MIN_QUOTE_LENGTH = 12
+
+const normalise = (text: string) => text.toLowerCase().replace(/\s+/g, ' ').trim()
+
+/** The Job Offer excerpts quoted in doNotSay items, normalised, without ellipses. */
+export function doNotSayQuotes(doNotSay: string[]): string[] {
+  return doNotSay
+    .flatMap((item) => [...item.matchAll(QUOTED)].map((m) => m[1] ?? ''))
+    .map((quote) => normalise(quote.replace(/^[\s.…]+|[\s.…]+$/g, '')))
+    .filter((quote) => quote.length >= MIN_QUOTE_LENGTH)
+}
+
+/** Rejects internal conditions and any Job Offer text quoted in the Brief's doNotSay. */
+export function internalFactIssues(fields: TextField[], doNotSay: string[] = []): ContentIssue[] {
+  const quotes = doNotSayQuotes(doNotSay)
+  return fields
+    .filter(
+      ({ text }) =>
+        INTERNAL_CONDITIONS.some((pattern) => pattern.test(text)) ||
+        quotes.some((quote) => normalise(text).includes(quote)),
+    )
+    .map(({ path }) => ({
+      path,
+      message:
+        'Contiene una condizione interna della Job Offer (es. trasferte senza indennità, ore pagate a percentuale della paga): non va pubblicata.',
+    }))
+}
+
+/** URL, email or phone number: the copy never carries contact data (also blocks injected links). */
+const CONTACT = /https?:\/\/|www\.|[\w.+-]+@[\w-]+\.\w|\+?\d[\d\s]{8,}\d/i
+
+export function contactIssues(fields: TextField[]): ContentIssue[] {
+  return fields
+    .filter(({ text }) => CONTACT.test(text))
+    .map(({ path }) => ({
+      path,
+      message: 'Link, email e numeri di telefono non sono ammessi: la candidatura passa dal Canale.',
+    }))
+}

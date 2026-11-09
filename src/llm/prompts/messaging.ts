@@ -20,6 +20,6 @@ Campi:
 - creative (se il formato prevede un'immagine): overlayTexts = 2 righe: riga 1 il ruolo completo con i due punti, riga 2 la parte del titolo dopo i due punti; highlightWord = una parola sola, senza spazi, che compare identica come parola intera in una delle righe; photoSubject = scena realistica del lavoro; width e height esattamente come nei vincoli. Altrimenti null.`
 
 export const messagingPrompt: VariantPrompt = {
-  version: 'messaging@v5',
+  version: 'messaging@v6',
   build: (input) => ({ system, user: variantUserMessage(input) }),
 }
