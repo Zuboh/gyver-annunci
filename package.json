@@ -1,0 +1,24 @@
+{
+  "name": "gyver-annunci",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "db:reset": "bun scripts/db-reset.ts",
+    "test": "bun test",
+    "gen:sample": "bun scripts/gen-sample.ts"
+  },
+  "dependencies": {
+    "@elysia/static": "1.4.12",
+    "@sinclair/typebox": "0.34.52",
+    "elysia": "1.4.31",
+    "openai": "7.53.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "typescript": "7.0.2"
+  }
+}
