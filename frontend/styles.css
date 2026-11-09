@@ -34,7 +34,11 @@ code { font-size: 12px; background: var(--grey-100); padding: 1px 4px; border-ra
 .spacer { flex: 1; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-.topbar { display: flex; align-items: baseline; gap: 12px; padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--grey-300); }
+/* Same column as .container: max 1080px content, centred, 24px side padding. */
+.topbar {
+  display: flex; align-items: baseline; gap: 12px; background: #fff; border-bottom: 1px solid var(--grey-300);
+  padding: 14px max(24px, calc((100% - 1080px) / 2 + 24px));
+}
 .topbar__brand { font-family: var(--font-head); font-weight: 800; text-transform: uppercase; font-size: 18px; color: var(--ink); text-decoration: none; }
 .topbar__brand::first-letter { color: var(--orange); }
 .container { max-width: 1080px; margin: 0 auto; padding: 20px 24px 60px; }
