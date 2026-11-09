@@ -1,7 +1,8 @@
 // Ads use cases (SPEC "Annunci"): create Ad, add / regenerate Variant, save manual Version,
 // discard / restore Variant, change Status and Location, queries. LLM calls are async and
 // happen OUTSIDE transactions (bun:sqlite transactions must be synchronous); rows that belong
-// together (a Variant and its first Version) are written in one transaction afterwards.
+// together (a new Ad and its Variants, a Variant and its first Version) are written in one
+// transaction afterwards.
 import type { Database } from 'bun:sqlite'
 import { findChannel, findChannelFormat, listChannelsWithFormats } from '../catalog/channel-catalog'
 import { findJobOffer } from '../db/job-offers'
@@ -59,6 +60,17 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
     return ad
   }
 
+  /** Archived Ads are frozen: no new content and no Variant changes until the Status changes. */
+  const requireEditableAd = (id: string): Ad => {
+    const ad = requireAd(id)
+    if (ad.status === 'archived') {
+      throw unprocessable('AD_ARCHIVED', "L'Annuncio è archiviato: cambia lo Stato per modificarne le Varianti.", {
+        adId: ad.id,
+      })
+    }
+    return ad
+  }
+
   const requireVariant = (id: string): Variant => {
     const variant = repo.findVariant(db, id)
     if (!variant) throw notFound('Variante non trovata.')
@@ -90,17 +102,31 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
     promptVersion: generated.promptVersion,
   })
 
+  /** Throws 400 if another active Variant of the Ad (not `exceptVariantId`) already uses the angle. */
+  const assertAngleFree = (adId: string, angle: string, exceptVariantId?: string) => {
+    const taken = repo
+      .listVariants(db, adId)
+      .some((v) => v.active && v.id !== exceptVariantId && sameAngle(v.angle, angle))
+    if (taken) throw badRequest(`L'Angolo "${angle}" è già usato da una Variante attiva di questo Annuncio.`, { angle })
+  }
+
   /** Variant + its first Version, atomically: a Variant never exists without content. */
-  const insertGeneratedVariant = db.transaction((adId: string, angle: string, generated: GeneratedVariantContent) => {
+  const insertGeneratedVariant = (adId: string, angle: string, generated: GeneratedVariantContent) => {
+    // Checked again here: a concurrent request may have taken the angle during the LLM call.
+    assertAngleFree(adId, angle)
     const variant = repo.insertVariant(db, adId, angle)
     repo.insertVersion(db, variant.id, generated.content, llmProvenance(generated))
     return variant.id
-  })
-
-  const assertAngleFree = (adId: string, angle: string) => {
-    const taken = repo.listVariants(db, adId).some((v) => v.active && sameAngle(v.angle, angle))
-    if (taken) throw badRequest(`L'Angolo "${angle}" è già usato da una Variante attiva di questo Annuncio.`, { angle })
   }
+  const insertGeneratedVariantTx = db.transaction(insertGeneratedVariant)
+
+  /** A new Ad and its generated Variants, atomically: an Ad is never stored without a Variant. */
+  const insertAdWithVariants = db.transaction(
+    (ad: Ad, variants: Array<{ angle: string; generated: GeneratedVariantContent }>) => {
+      repo.saveAd(db, ad)
+      for (const { angle, generated } of variants) insertGeneratedVariant(ad.id, angle, generated)
+    },
+  )
 
   return {
     async createAd(input) {
@@ -129,7 +155,9 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
       // generations reuse it. If this fails (LLM unavailable, invalid Brief) nothing is saved.
       await generation.getOrCreateBrief(jobOffer.id)
 
-      const ad = repo.insertAd(db, {
+      // Generate first, store after: the Ad id tags the generation runs, but the Ad is saved
+      // only if at least one angle succeeds. If every angle fails, the first error propagates.
+      const ad = repo.newAd({
         jobOfferId: jobOffer.id,
         channelId: input.channelId,
         format: input.format,
@@ -137,26 +165,34 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
       })
 
       const results = await Promise.allSettled(angles.map((angle) => generation.generateVariantContent({ ad, angle })))
+      const succeeded: Array<{ angle: string; generated: GeneratedVariantContent }> = []
       const failedAngles: FailedAngle[] = []
+      let firstError: unknown
       results.forEach((result, i) => {
         const angle = angles[i] ?? ''
-        if (result.status === 'fulfilled') insertGeneratedVariant(ad.id, angle, result.value)
-        else failedAngles.push({ angle, error: toErrorBody(result.reason) })
+        if (result.status === 'fulfilled') {
+          succeeded.push({ angle, generated: result.value })
+        } else {
+          if (failedAngles.length === 0) firstError = result.reason
+          failedAngles.push({ angle, error: toErrorBody(result.reason) })
+        }
       })
+      if (succeeded.length === 0) throw firstError
+      insertAdWithVariants(ad, succeeded)
       return { ad: getAd(ad.id), failedAngles }
     },
 
     async addVariant(adId, rawAngle) {
-      const ad = requireAd(adId)
+      const ad = requireEditableAd(adId)
       const angle = rawAngle.trim()
       assertAngleFree(ad.id, angle)
       const generated = await generation.generateVariantContent({ ad, angle })
-      return variantView(insertGeneratedVariant(ad.id, angle, generated))
+      return variantView(insertGeneratedVariantTx(ad.id, angle, generated))
     },
 
     async regenerateVariant(variantId) {
       const variant = requireVariant(variantId)
-      const ad = requireAd(variant.adId)
+      const ad = requireEditableAd(variant.adId)
       const generated = await generation.generateVariantContent({ ad, angle: variant.angle })
       repo.insertVersion(db, variant.id, generated.content, llmProvenance(generated))
       return variantView(variant.id)
@@ -164,7 +200,7 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
 
     saveManualVersion(variantId, content) {
       const variant = requireVariant(variantId)
-      const ad = requireAd(variant.adId)
+      const ad = requireEditableAd(variant.adId)
       const channel = findChannel(db, ad.channelId)
       const channelFormat = findChannelFormat(db, ad.channelId, ad.format)
       if (!channel || !channelFormat) throw new Error(`Ad ${ad.id}: channel format missing from the catalog`)
@@ -180,6 +216,8 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
 
     setVariantActive(variantId, active) {
       const variant = requireVariant(variantId)
+      requireEditableAd(variant.adId)
+      if (active) assertAngleFree(variant.adId, variant.angle, variant.id)
       repo.setVariantActive(db, variant.id, active)
       return variantView(variant.id)
     },
@@ -188,6 +226,18 @@ export function createAdUseCases(deps: { db: Database; generation: GenerationSer
       const ad = requireAd(adId)
       if (changes.status === undefined && changes.location === undefined) {
         throw badRequest('Indica almeno uno tra status e location.')
+      }
+      // Status changes are otherwise free (the Team Delivery sets them by hand), but an Ad
+      // cannot go live without content to show.
+      if (changes.status === 'ready' || changes.status === 'published') {
+        const hasActive = repo.listVariants(db, ad.id).some((v) => v.active)
+        if (!hasActive) {
+          throw unprocessable(
+            'AD_HAS_NO_ACTIVE_VARIANT',
+            "L'Annuncio non ha Varianti attive: ripristinane o aggiungine una prima di renderlo pronto o pubblicato.",
+            { status: changes.status },
+          )
+        }
       }
       repo.updateAd(db, ad, {
         status: changes.status ?? ad.status,

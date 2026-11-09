@@ -78,6 +78,9 @@ export interface JobOffer {
   payload: JobOfferPayload
 }
 
+/** List view of a Job Offer: the query columns only, without the internal payload. */
+export type JobOfferSummary = Omit<JobOffer, 'payload'>
+
 // ---------------------------------------------------------------------------
 // Brief: publishable facts extracted once per Job Offer. Append-only; latest = in use.
 // ---------------------------------------------------------------------------

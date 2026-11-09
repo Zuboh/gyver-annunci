@@ -55,13 +55,14 @@ const locationParams = (location: AdLocation) => ({
   country: location.country,
 })
 
-/** New Ad in status draft. The composite FK rejects a Channel × Format not in channel_formats. */
-export function insertAd(
-  db: Database,
-  input: { jobOfferId: string; channelId: string; format: Format; location: AdLocation },
-): Ad {
+/** New Ad in status draft, not yet stored: its id can tag generation runs before saveAd. */
+export function newAd(input: { jobOfferId: string; channelId: string; format: Format; location: AdLocation }): Ad {
   const timestamp = now()
-  const ad: Ad = { id: newId('ad'), ...input, status: 'draft', createdAt: timestamp, updatedAt: timestamp }
+  return { id: newId('ad'), ...input, status: 'draft', createdAt: timestamp, updatedAt: timestamp }
+}
+
+/** Stores an Ad built by newAd. The composite FK rejects a Channel × Format not in channel_formats. */
+export function saveAd(db: Database, ad: Ad): Ad {
   db.query(
     `INSERT INTO ads (id, job_offer_id, channel_id, format, status,
        location_label, location_municipality, location_province, location_province_code,
@@ -79,6 +80,14 @@ export function insertAd(
     updatedAt: ad.updatedAt,
   })
   return ad
+}
+
+/** New Ad in status draft, stored at once. */
+export function insertAd(
+  db: Database,
+  input: { jobOfferId: string; channelId: string; format: Format; location: AdLocation },
+): Ad {
+  return saveAd(db, newAd(input))
 }
 
 export function findAd(db: Database, id: string): Ad | null {

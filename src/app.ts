@@ -3,7 +3,7 @@
 import type { Database } from 'bun:sqlite'
 import { fileURLToPath } from 'node:url'
 import { staticPlugin } from '@elysia/static'
-import { Elysia, file } from 'elysia'
+import { Elysia } from 'elysia'
 import { createAdUseCases } from './ads/ad-use-cases'
 import type { ContentIssue } from './domain/types'
 import { createGenerationService } from './generation/generation-service'
@@ -74,8 +74,9 @@ export function createApp(deps: AppDeps) {
       .use(adsRoutes(ads))
       .use(variantsRoutes(ads))
       // Static UI: index on `/`, assets under `/public`. Never `indexHTML: true`, which would
-      // turn API 404s into HTML.
-      .get('/', file(`${publicDir}/index.html`))
+      // turn API 404s into HTML. A handler (not `file()`) so the file is read on every request:
+      // `file()` is compiled into a static response with the Content-Length of startup time.
+      .get('/', () => Bun.file(`${publicDir}/index.html`))
       .use(staticPlugin({ assets: publicDir, prefix: '/public' }))
   )
 }

@@ -54,6 +54,10 @@ const CURRENCY_AFTER = /^\s*(?:€|eur\b|euro\b)/i
 const SALARY_WORD_BEFORE = /\b(?:ral|retribuzione|stipendio|salario)\b\D{0,20}$/i
 /** Below this an amount is a daily/benefit figure (ticket, indennità), not a yearly salary. */
 const MIN_YEARLY_AMOUNT = 1000
+/** Amounts per month, night or day ("2.500 € al mese", "60 € a notte"): not a yearly RAL. */
+const NON_YEARLY_AFTER = /^\D{0,20}?(?:al mese|mensil|\/\s?mese|a notte|al giorno|giornalier)/i
+/** Amounts of a bonus or benefit ("premio di 1.500 €", "indennità di 1.200 €"): not the RAL. */
+const BENEFIT_BEFORE = /(?:bonus|premio|ticket|indennit)\D{0,20}$/i
 
 interface SalaryMatch {
   value: number
@@ -61,7 +65,7 @@ interface SalaryMatch {
   end: number
 }
 
-/** Yearly-salary-sized money amounts in `text` (with € / EUR / RAL next to the number). */
+/** Yearly-salary-sized money amounts in `text` (with € / EUR / RAL next to the number), skipping monthly, daily and benefit figures. */
 export function salaryAmounts(text: string): number[] {
   return salaryMatches(text).map((m) => m.value)
 }
@@ -76,9 +80,10 @@ function salaryMatches(text: string): SalaryMatch[] {
     const after = text.slice(end, end + 6)
     const isMoney =
       CURRENCY_BEFORE.test(before) || CURRENCY_AFTER.test(after) || SALARY_WORD_BEFORE.test(before)
+    const notYearly = NON_YEARLY_AFTER.test(text.slice(end, end + 30)) || BENEFIT_BEFORE.test(before)
     const digits = match[1] ?? ''
     const value = Number(digits.replace(/[.'’]/g, '')) * (match[2] ? 1000 : 1)
-    if (isMoney && value >= MIN_YEARLY_AMOUNT) amounts.push({ value, start, end })
+    if (isMoney && !notYearly && value >= MIN_YEARLY_AMOUNT) amounts.push({ value, start, end })
   }
   return amounts
 }

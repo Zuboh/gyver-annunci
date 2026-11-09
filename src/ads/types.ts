@@ -30,7 +30,7 @@ export interface FailedAngle {
   error: { code: ErrorCode; message: string; details?: unknown }
 }
 
-/** The Ad and the Variants that succeeded stay saved even when some (or all) angles fail. */
+/** The Ad and the Variants that succeeded are saved when some angles fail; if all fail, nothing is saved and the first error is thrown. */
 export interface CreateAdResult {
   ad: AdDetail
   failedAngles: FailedAngle[]

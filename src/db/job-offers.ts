@@ -1,6 +1,6 @@
 // Job Offers: external, read-only input. Only queries live here; the seed inserts jo_001.
 import type { Database } from 'bun:sqlite'
-import type { JobOffer, JobOfferPayload } from '../domain/types'
+import type { JobOffer, JobOfferPayload, JobOfferSummary } from '../domain/types'
 
 interface JobOfferRow {
   id: string
@@ -23,7 +23,9 @@ export function findJobOffer(db: Database, id: string): JobOffer | null {
   return row && toJobOffer(row)
 }
 
-export function listJobOffers(db: Database): JobOffer[] {
-  const rows = db.query('SELECT * FROM job_offers ORDER BY id').all() as JobOfferRow[]
-  return rows.map(toJobOffer)
+/** Summaries only: the payload holds internal data and is served by the detail endpoint alone. */
+export function listJobOffers(db: Database): JobOfferSummary[] {
+  return db
+    .query('SELECT id, title, company_name AS companyName, status FROM job_offers ORDER BY id')
+    .all() as JobOfferSummary[]
 }

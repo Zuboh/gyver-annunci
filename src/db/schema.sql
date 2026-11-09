@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS variants (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   UNIQUE (ad_id, label)
 );
+-- Active Variants of an Ad have distinct angles (case- and space-insensitive).
+CREATE UNIQUE INDEX IF NOT EXISTS variants_active_angle ON variants (ad_id, lower(trim(angle))) WHERE active = 1;
 
 -- Version: immutable content of a Variant (ADR 0002). Current = highest number.
 -- LLM Versions carry their provenance; manual Versions carry none.

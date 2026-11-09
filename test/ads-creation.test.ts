@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { invalidContent, validVariantContent } from '../src/llm/fake-llm-client'
+import { LlmUnavailableError } from '../src/llm/llm-client'
 import { setup } from './helpers'
 
 describe('POST /api/ads', () => {
@@ -56,6 +57,27 @@ describe('POST /api/ads', () => {
 
     const detail = await api.get(`/api/ads/${res.body.ad.id}`)
     expect(detail.body.variants.map((v: { angle: string }) => v.angle).sort()).toEqual(['carriera', 'multinazionale'])
+  })
+
+  test('every angle failing → 502 GENERATION_FAILED, no Ad saved', async () => {
+    const { api } = setup({ variantFallback: { content: invalidContent } })
+    const res = await api.post('/api/ads', {
+      job_offer_id: 'jo_001',
+      channel: 'indeed',
+      format: 'text',
+      angles: ['carriera', 'stipendio'],
+    })
+    expect(res.status).toBe(502)
+    expect(res.body.error.code).toBe('GENERATION_FAILED')
+    expect((await api.get('/api/ads')).body).toHaveLength(3)
+  })
+
+  test('LLM unavailable on every angle → 503 LLM_UNAVAILABLE, no Ad saved', async () => {
+    const { api } = setup({ variantFallback: { throws: new LlmUnavailableError('Rete non raggiungibile.') } })
+    const res = await api.post('/api/ads', { job_offer_id: 'jo_001', channel: 'whatsapp', format: 'text' })
+    expect(res.status).toBe(503)
+    expect(res.body.error.code).toBe('LLM_UNAVAILABLE')
+    expect((await api.get('/api/ads')).body).toHaveLength(3)
   })
 
   test('more than 3 angles → 400 BAD_REQUEST, nothing saved', async () => {

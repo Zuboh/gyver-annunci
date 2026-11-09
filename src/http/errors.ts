@@ -8,6 +8,10 @@ export type ErrorCode =
   | 'CHANNEL_FORMAT_NOT_ALLOWED'
   /** 422: manual content fails validation; details = { issues: ContentIssue[] }. */
   | 'INVALID_CONTENT'
+  /** 422: content changes (regenerate, new Variant, manual Version, discard/restore) on an archived Ad. */
+  | 'AD_ARCHIVED'
+  /** 422: Status ready/published requested while the Ad has no active Variant. */
+  | 'AD_HAS_NO_ACTIVE_VARIANT'
   /** 502: LLM output still invalid after the retry; details = { runId }. */
   | 'GENERATION_FAILED'
   /** 503: no API key, network error, timeout. */
@@ -33,7 +37,7 @@ export const badRequest = (message: string, details?: unknown) =>
 export const notFound = (message: string) => new AppError(404, 'NOT_FOUND', message)
 
 export const unprocessable = (
-  code: 'CHANNEL_FORMAT_NOT_ALLOWED' | 'INVALID_CONTENT',
+  code: 'CHANNEL_FORMAT_NOT_ALLOWED' | 'INVALID_CONTENT' | 'AD_ARCHIVED' | 'AD_HAS_NO_ACTIVE_VARIANT',
   message: string,
   details?: unknown,
 ) => new AppError(422, code, message, details)

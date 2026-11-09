@@ -17,4 +17,12 @@ describe('smoke', () => {
     expect(res.status).toBe(404)
     expect(await res.json()).toEqual({ error: { code: 'NOT_FOUND', message: 'Risorsa non trovata.' } })
   })
+
+  test('GET / serves the whole UI page (read per request, not a startup snapshot)', async () => {
+    const res = await app.handle(new Request('http://localhost/'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('text/html')
+    const body = await res.text()
+    expect(body).toBe(await Bun.file(new URL('../public/index.html', import.meta.url)).text())
+  })
 })

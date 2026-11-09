@@ -66,3 +66,20 @@ describe('GET /api/ads filters', () => {
     expect(res.body.error.code).toBe('BAD_REQUEST')
   })
 })
+
+describe('GET /api/job-offers', () => {
+  test('lists summaries only, without the internal payload', async () => {
+    const { api } = setup()
+    const res = await api.get('/api/job-offers')
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([
+      { id: 'jo_001', title: expect.any(String), companyName: expect.any(String), status: expect.any(String) },
+    ])
+  })
+
+  test('the detail still carries the payload (internal tool)', async () => {
+    const { api } = setup()
+    const res = await api.get('/api/job-offers/jo_001')
+    expect(res.body.payload.job_offer_id).toBe('jo_001')
+  })
+})
