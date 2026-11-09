@@ -33,6 +33,9 @@ async function api(path, { method = 'GET', body } = {}) {
   return data
 }
 
+/** Path segment from an id (hash-derived ids are user-controlled): never splice it raw. */
+const seg = (id) => encodeURIComponent(id)
+
 const qs = (params) => {
   const entries = Object.entries(params).filter(([, v]) => v)
   return entries.length ? `?${new URLSearchParams(entries)}` : ''
@@ -67,6 +70,12 @@ function explain(err) {
   if (err.code === 'GENERATION_FAILED') {
     const runId = err.details?.runId
     return `L'LLM non ha prodotto un contenuto valido nemmeno dopo il nuovo tentativo. Nessuna Versione salvata.${runId ? ` Run: ${runId}` : ''}`
+  }
+  if (err.code === 'AD_ARCHIVED') {
+    return "L'Annuncio è archiviato: non si possono rigenerare, aggiungere, modificare, scartare o ripristinare Varianti. Cambia prima lo Stato."
+  }
+  if (err.code === 'AD_HAS_NO_ACTIVE_VARIANT') {
+    return "L'Annuncio non ha Varianti attive: ripristinane o aggiungine una prima di segnarlo come Pronto o Pubblicato."
   }
   return err.message
 }
@@ -315,9 +324,10 @@ function VariantCard({ variant, ad, channel, onChanged, onError }) {
 
   const current = variant.currentVersion
   const version = shown ?? current
+  const frozen = ad.status === 'archived'
 
   const loadVersions = () =>
-    api(`/api/variants/${variant.id}/versions`).then(
+    api(`/api/variants/${seg(variant.id)}/versions`).then(
       (vs) => setVersions([...vs].sort((a, b) => b.number - a.number)),
       onError,
     )
@@ -340,8 +350,8 @@ function VariantCard({ variant, ad, channel, onChanged, onError }) {
   }
 
   const toggleActive = () =>
-    run(() => api(`/api/variants/${variant.id}`, { method: 'PATCH', body: { active: !variant.active } }))
-  const regenerate = () => run(() => api(`/api/variants/${variant.id}/regenerate`, { method: 'POST' }))
+    run(() => api(`/api/variants/${seg(variant.id)}`, { method: 'PATCH', body: { active: !variant.active } }))
+  const regenerate = () => run(() => api(`/api/variants/${seg(variant.id)}/regenerate`, { method: 'POST' }))
 
   const startEdit = () => {
     setDraft(JSON.stringify(current.content, null, 2))
@@ -358,7 +368,7 @@ function VariantCard({ variant, ad, channel, onChanged, onError }) {
       return
     }
     setEditError(null)
-    const ok = await run(() => api(`/api/variants/${variant.id}/content`, { method: 'PUT', body: { content } }), setEditError)
+    const ok = await run(() => api(`/api/variants/${seg(variant.id)}/content`, { method: 'PUT', body: { content } }), setEditError)
     if (ok) setEditing(false)
   }
 
@@ -369,11 +379,11 @@ function VariantCard({ variant, ad, channel, onChanged, onError }) {
         <${Chip} kind="angle">Angolo: ${variant.angle}</${Chip}>
         <${Chip} kind=${variant.active ? 'active' : 'discarded'}>${variant.active ? 'Attiva' : 'Scartata'}</${Chip}>
         <span class="spacer"></span>
-        <button class="btn btn--ghost btn--sm" disabled=${busy} onClick=${toggleActive}>
+        <button class="btn btn--ghost btn--sm" disabled=${busy || frozen} onClick=${toggleActive}>
           ${variant.active ? 'Scarta' : 'Ripristina'}
         </button>
-        <button class="btn btn--ghost btn--sm" disabled=${busy} onClick=${regenerate}>Rigenera con LLM</button>
-        <button class="btn btn--ghost btn--sm" disabled=${busy || editing} onClick=${startEdit}>Modifica a mano</button>
+        <button class="btn btn--ghost btn--sm" disabled=${busy || frozen} onClick=${regenerate}>Rigenera con LLM</button>
+        <button class="btn btn--ghost btn--sm" disabled=${busy || editing || frozen} onClick=${startEdit}>Modifica a mano</button>
       </header>
 
       <div class="version-line">
@@ -432,7 +442,7 @@ function AdDetail({ id, catalog }) {
 
   const load = useCallback(
     () =>
-      api(`/api/ads/${id}`).then((a) => {
+      api(`/api/ads/${seg(id)}`).then((a) => {
         setAd(a)
         setLocLabel(a.location.label)
       }, setError),
@@ -457,11 +467,11 @@ function AdDetail({ id, catalog }) {
     }
   }
 
-  const patch = (body) => run(() => api(`/api/ads/${id}`, { method: 'PATCH', body }))
+  const patch = (body) => run(() => api(`/api/ads/${seg(id)}`, { method: 'PATCH', body }))
 
   const addVariant = async (e) => {
     e.preventDefault()
-    const ok = await run(() => api(`/api/ads/${id}/variants`, { method: 'POST', body: { angle: newAngle.trim() } }))
+    const ok = await run(() => api(`/api/ads/${seg(id)}/variants`, { method: 'POST', body: { angle: newAngle.trim() } }))
     if (ok) setNewAngle('')
   }
 
@@ -472,6 +482,7 @@ function AdDetail({ id, catalog }) {
   const channel = catalog.channelById[ad.channelId]
   const jo = catalog.jobOfferById[ad.jobOfferId]
   const usedAngles = new Set(ad.variants.map((v) => v.angle))
+  const archived = ad.status === 'archived'
 
   return html`
     <section>
@@ -486,6 +497,7 @@ function AdDetail({ id, catalog }) {
         <${Chip}>${ad.location.label}</${Chip}>
       </div>
       <${ErrorBanner} error=${error} onClose=${() => setError(null)} />
+      ${archived && html`<p class="muted small" role="status">Annuncio archiviato: le Varianti sono in sola lettura finché non cambi lo Stato.</p>`}
 
       <div class="card ad-meta">
         <label>Stato
@@ -516,13 +528,13 @@ function AdDetail({ id, catalog }) {
 
       <form class="card inline-form" onSubmit=${addVariant}>
         <label>Nuova Variante con Angolo
-          <input list="angle-suggestions" value=${newAngle} maxlength="60" placeholder="es. stipendio"
+          <input list="angle-suggestions" value=${newAngle} maxlength="60" placeholder="es. stipendio" disabled=${archived}
             onInput=${(e) => setNewAngle(e.currentTarget.value)} />
         </label>
         <datalist id="angle-suggestions">
           ${catalog.angles.filter((a) => !usedAngles.has(a)).map((a) => html`<option value=${a} />`)}
         </datalist>
-        <button class="btn btn--primary btn--sm" disabled=${busy || !newAngle.trim()}>Aggiungi Variante</button>
+        <button class="btn btn--primary btn--sm" disabled=${busy || archived || !newAngle.trim()}>Aggiungi Variante</button>
       </form>
     </section>
   `

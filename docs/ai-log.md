@@ -71,3 +71,22 @@
 - Prompt v5: `suggestedAngles` prima di `sellingPoints` nello schema del Brief, sellingPoints allineati agli Angoli, benefit con condizione, forme della retribuzione, primo badge e titolo WhatsApp sull'Angolo, overlay social senza i fatti degli altri Angoli, TikTok parlato, hashtag diversi dal nome dell'Angolo, bullet Indeed con il punto.
 - 2 giri di generazione (tetto), entrambi 6/6 al primo tentativo; il secondo dopo aver riordinato lo schema e rafforzato badge e overlay, alla stessa versione v5. Restano: "Effetti" al posto di "Effettui", `#carriera` e RAL negli overlay della Variante carriera su TikTok, "a notte" perso in un badge WhatsApp.
 - `bun test` 56 pass, `bunx tsc --noEmit` pulito.
+
+## 2026-11-09 — Correzioni dalla review (agent-code-writer)
+Applicate (test attraverso `createApp` + DB in memoria + FakeLlmClient, nessuna chiamata OpenAI):
+- Server: `listen({ port, hostname: HOST ?? '127.0.0.1', idleTimeout: 255 })`. Il default di Elysia (30 s) chiudeva il socket durante Brief + Variante; il bind su loopback tiene lo strumento fuori dalla rete. `HOST` in `.env.example`.
+- `GET /` legge `index.html` a ogni richiesta (handler con `Bun.file`), non più `file()` con il Content-Length dell'avvio (il problema annotato nella Fase 5).
+- `POST /api/ads`: prima si genera, poi Annuncio e Varianti riuscite si salvano in una sola transazione. Se tutti gli Angoli falliscono non si salva nulla e si propaga il primo errore (502 `GENERATION_FAILED` / 503 `LLM_UNAVAILABLE`); il fallimento parziale resta 201 con `failedAngles`. Le righe `generation_runs` di un Annuncio mai salvato restano, con `ref` = id non esistente (riferimento polimorfico, senza FK).
+- Guardie di Stato: 422 `AD_ARCHIVED` su rigenera, nuova Variante, Versione manuale e scarta/ripristina di un Annuncio archiviato; 422 `AD_HAS_NO_ACTIVE_VARIANT` su `ready`/`published` senza Varianti attive. Le altre transizioni restano libere (le cambia a mano il Team Delivery); anche uscire da `archived`.
+- Angolo unico anche al ripristino di una Variante (400 come sull'aggiunta), ricontrollato dentro la transazione di inserimento; indice parziale `variants_active_angle` come rete di sicurezza. DB versionato rigenerato con `db:reset`: 3 Annunci, 3 Versioni, 0 `generation_runs`, 0 Brief.
+- Regola della retribuzione: ignora le cifre seguite da "al mese", "mensil", "/mese", "a notte", "al giorno", "giornalier" o precedute da "bonus", "premio", "ticket", "indennit".
+- Sicurezza: i prompt di canale non ricevono più `doNotSay`; nuove regole sull'output LLM per condizioni interne ("senza indennità", percentuale della paga, testo citato in `doNotSay`) e per link/email/telefoni; stesso controllo sulle condizioni interne per `companyPitch`, `benefits`, `sellingPoints` e `travel` del Brief; riga anti-injection nel prompt del Brief. Prompt a v6, non rigenerati contro il modello (vedi `docs/prompt-log.md`).
+- `GET /api/job-offers` restituisce solo `{ id, title, companyName, status }`; il dettaglio resta completo (strumento interno).
+- UI: `encodeURIComponent` su ogni id nei percorsi API, messaggi italiani per i nuovi codici, azioni sulle Varianti e nuova Variante disabilitate sugli Annunci archiviati. `.DS_Store` in `.gitignore`.
+
+Deviazione dalla SPEC (resta): le regole di formulazione (forme della retribuzione, condizione dell'indennità) e le nuove regole di sicurezza valgono solo per l'output LLM (`origin: 'llm'`). Gli esempi del PDF nel seed (`"RAL iniziale da €38'000 + indennità"`) le violerebbero; le Versioni manuali restano una scelta editoriale del Team Delivery.
+
+Rimandate:
+- `request_id` e colonna `angle` in `generation_runs` (opzionale): richiede una migrazione delle colonne sui DB esistenti, perché lo schema è applicato con `CREATE TABLE IF NOT EXISTS`.
+- Documentate come tradeoff, non corrette: nessuna autenticazione; CDN senza SRI; Luogo modificabile su un Annuncio pubblicato; errori OpenAI non mappati → 500; transizioni di Stato libere oltre alle guardie sopra; numeri di jo_001 negli esempi dei prompt.
+- Notate e non corrette: scartare l'ultima Variante attiva di un Annuncio pubblicato è ammesso (la guardia vale solo quando si imposta lo Stato); `lower()` di SQLite nell'indice è solo ASCII, mentre il controllo nel codice usa `toLowerCase()`.
