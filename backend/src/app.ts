@@ -76,8 +76,12 @@ export function createApp(deps: AppDeps) {
       // Static UI: index on `/`, assets under `/assets`. Never `indexHTML: true`, which would
       // turn API 404s into HTML. A handler (not `file()`) so the file is read on every request:
       // `file()` is compiled into a static response with the Content-Length of startup time.
-      .get('/', () => Bun.file(`${frontendDir}/index.html`))
-      .use(staticPlugin({ assets: frontendDir, prefix: '/assets' }))
+      // `no-cache` everywhere: the browser revalidates (ETag) instead of keeping stale ES modules.
+      .get('/', ({ set }) => {
+        set.headers['cache-control'] = 'no-cache'
+        return Bun.file(`${frontendDir}/index.html`)
+      })
+      .use(staticPlugin({ assets: frontendDir, prefix: '/assets', maxAge: 0, directive: 'no-cache' }))
   )
 }
 

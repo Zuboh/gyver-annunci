@@ -196,7 +196,7 @@ export function AdDetail({ id, catalog }) {
             ${Object.entries(STATUS_LABELS).map(([v, l]) => html`<option value=${v}>${l}</option>`)}
           </select>
         </label>
-        <form class="inline-form" onSubmit=${(e) => {
+        <form class="inline-form inline-form--nowrap" onSubmit=${(e) => {
           e.preventDefault()
           patch({ location: { ...ad.location, label: locLabel } })
         }}>
@@ -205,11 +205,14 @@ export function AdDetail({ id, catalog }) {
           </label>
           <button class="btn btn--ghost btn--sm" disabled=${busy || !locLabel.trim() || locLabel === ad.location.label}>Salva Luogo</button>
         </form>
-        <div class="muted small">
-          ${[ad.location.municipality, ad.location.provinceCode && `(${ad.location.provinceCode})`, ad.location.region, ad.location.country]
-            .filter(Boolean)
-            .join(' ')}
-          · creato ${fmtDate(ad.createdAt)} · aggiornato ${fmtDate(ad.updatedAt)}
+        <div class="ad-meta__info muted small">
+          ${[
+            [ad.location.municipality, ad.location.provinceCode && `(${ad.location.provinceCode})`, ad.location.region, ad.location.country]
+              .filter(Boolean)
+              .join(' '),
+            `creato ${fmtDate(ad.createdAt)}`,
+            `aggiornato ${fmtDate(ad.updatedAt)}`,
+          ].join(' · ')}
         </div>
       </div>
 

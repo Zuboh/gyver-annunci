@@ -82,16 +82,25 @@ legend { font-size: 13px; color: var(--grey-600); padding: 0 4px; }
 .chip--discarded { background: var(--grey-300); color: var(--grey-600); }
 
 /* Cards */
-.card { display: block; background: #fff; border: 1px solid var(--grey-300); border-radius: var(--r-card); padding: 16px; }
+.card { display: block; background: #fff; border: 1px solid var(--grey-300); border-radius: var(--r-card); padding: 16px; min-width: 0; overflow-wrap: anywhere; }
 .filters { display: flex; gap: var(--gap); flex-wrap: wrap; }
 .filters label { flex: 1 1 200px; }
 .ad-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--gap); }
 .ad-card { color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: 8px; height: 100%; }
 .ad-card:hover { border-color: var(--blu); color: inherit; }
 .ad-card__title { font-family: var(--font-head); font-weight: 800; text-transform: uppercase; font-size: 15px; }
-.ad-meta { display: flex; flex-wrap: wrap; gap: var(--gap) 24px; align-items: flex-end; }
+.ad-meta { display: grid; grid-template-columns: minmax(160px, auto) minmax(0, 1fr); gap: 12px 24px; align-items: end; }
+.ad-meta__info { grid-column: 1 / -1; }
 .inline-form { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
 .inline-form label { flex: 1 1 220px; }
+.inline-form--nowrap { flex-wrap: nowrap; }
+.inline-form--nowrap label { min-width: 0; }
+.inline-form--nowrap .btn { flex: none; }
+/* Same height for select, input and small button so their bottom edges line up. */
+.ad-meta select, .ad-meta input, .ad-meta .btn { height: 40px; box-sizing: border-box; }
+@media (max-width: 640px) {
+  .ad-meta { grid-template-columns: minmax(0, 1fr); }
+}
 .form { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
 .form > .btn { align-self: flex-start; }
 
@@ -114,7 +123,13 @@ legend { font-size: 13px; color: var(--grey-600); padding: 0 4px; }
 .creative-info dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13px; margin: 8px 0 0; }
 .creative-info dt { color: var(--grey-600); }
 .creative-info dd { margin: 0; }
-.preview { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.preview { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-width: 0; }
+.preview > * { max-width: 100%; }
+.preview pre, .editor textarea {
+  width: 100%; max-width: 100%; box-sizing: border-box; margin: 0;
+  white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+}
+.preview pre { background: var(--grey-100, #f4f4f4); border-radius: var(--r-input); padding: 12px; font-size: 12.5px; }
 
 /* --- Preview: WhatsApp flyer (A4) --- */
 .pv-wa-wrap { width: 100%; max-width: 420px; container-type: inline-size; }
