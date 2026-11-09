@@ -1,0 +1,122 @@
+{
+  "jobOfferId": "jo_001",
+  "channel": "instagram",
+  "format": "image",
+  "angle": "carriera",
+  "location": {
+    "label": "Orzinuovi (BS)",
+    "municipality": "Orzinuovi",
+    "province": "Brescia",
+    "provinceCode": "BS",
+    "region": "Lombardia",
+    "country": "IT"
+  },
+  "model": "gpt-4o-mini-2024-07-18",
+  "promptVersion": "social_ad@v1",
+  "generatedAt": "2026-11-09T16:37:10.945Z",
+  "brief": {
+    "id": "brief_74f45062-9836-49ad-bfb9-ce9e6c65dd82",
+    "model": "gpt-4o-mini-2024-07-18",
+    "promptVersion": "brief@v1",
+    "content": {
+      "roleTitle": "Tecnico elettricista fotovoltaico",
+      "companyPitch": "AB Group — multinazionale della cogenerazione e biogas. Fondato nel 1981, è l'azienda leader italiana nei settori della cogenerazione, biogas e rinnovabili. Oltre 1.700 dipendenti e presenza in 20 Paesi.",
+      "contractType": "Tempo indeterminato",
+      "salary": {
+        "min": 32000,
+        "max": 38000,
+        "currency": "EUR"
+      },
+      "experience": {
+        "minYears": 3,
+        "maxYears": 5
+      },
+      "skills": [
+        "Fotovoltaico industriale",
+        "Cabine secondarie - MT/BT"
+      ],
+      "responsibilities": [
+        "Effettuare sopralluoghi tecnici in cantiere",
+        "Supportare il coordinamento delle attività di montaggio",
+        "Verificare la corretta esecuzione delle attività",
+        "Eseguire le attività di collaudo",
+        "Supportare la verifica tecnica delle attività dei subappaltatori",
+        "Verificare il rispetto delle regole HSE",
+        "Eseguire interventi in campo per la manutenzione"
+      ],
+      "requirements": [
+        "Diploma tecnico in elettrotecnica",
+        "Almeno 3-4 anni di esperienza in installazione e avviamento di impianti FV",
+        "Capacità di leggere schemi elettrici e layout FV",
+        "Conoscenza di inverter, BESS e strumentazione di verifica impianti FV",
+        "Esperienza su impianti FV sopra i 100 kW",
+        "Esperienza su impianti di media tensione"
+      ],
+      "benefits": [
+        "RAL da 32.000 a 38.000 € in base all'esperienza",
+        "Indennità di 60 € lordi a notte per le trasferte multi-giorno",
+        "Ticket da 13 € per ogni giorno lavorato"
+      ],
+      "sellingPoints": [
+        "Carriera nella costruzione e avviamento di grandi impianti fotovoltaici",
+        "Opportunità in un'azienda leader di settore",
+        "Ambiente di lavoro internazionale"
+      ],
+      "workArea": "Orzinuovi (BS)",
+      "siteAddress": "Via Artigianato 27, 25034 Orzinuovi (BS)",
+      "travel": "Trasferte giornaliere frequenti (senza indennità)",
+      "doNotSay": [
+        "Trasferte non indennizzate",
+        "Percentuali di straordinari",
+        "Note per il recruiter"
+      ],
+      "suggestedAngles": [
+        "carriera",
+        "multinazionale",
+        "stipendio"
+      ]
+    }
+  },
+  "content": {
+    "caption": "Sei pronto a far decollare la tua **carriera**? ✈️ \nUnisciti ad AB Group come Tecnico Elettricista Fotovoltaico! \nOffriamo un contratto a tempo indeterminato con una RAL che va da 32.000 a 38.000 € in base all’esperienza. Ci occupiamo di costruire e avviare grandi impianti fotovoltaici per un futuro sostenibile. \nEntra a far parte di un azienda leader nel settore! \nCandidati ora!",
+    "hashtags": [
+      "#carriera",
+      "#fotovoltaico",
+      "#tecnici",
+      "#lavoro",
+      "#sostenibilità"
+    ],
+    "callToAction": "Candidati ora",
+    "creative": {
+      "overlayTexts": [
+        "Tecnico Elettricista",
+        "Fotovoltaico",
+        "Fai decollare la tua",
+        "carriera!"
+      ],
+      "highlightWord": "carriera",
+      "photoSubject": "Un tecnico elettricista mentre lavora su un impianto fotovoltaico sul campo, attrezzato e competente.",
+      "width": 1080,
+      "height": 1080
+    }
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "outcome": "invalid",
+      "issues": [
+        {
+          "path": "creative.highlightWord",
+          "message": "La parola evidenziata deve comparire in uno dei testi in sovrimpressione."
+        }
+      ],
+      "created_at": "2026-11-09T16:37:15.664Z"
+    },
+    {
+      "attempt": 2,
+      "outcome": "ok",
+      "issues": [],
+      "created_at": "2026-11-09T16:37:19.339Z"
+    }
+  ]
+}

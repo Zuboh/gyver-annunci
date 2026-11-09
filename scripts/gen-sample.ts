@@ -42,7 +42,9 @@ const brief = await service.getOrCreateBrief(JOB_OFFER_ID).catch((err: unknown) 
   console.error(`ERR brief: ${err.message}`, err.details ?? '')
   process.exit(1)
 })
-const angle = brief.content.suggestedAngles[0] ?? 'carriera'
+// Angles rotate across samples so the judge sees different angles, not only the first one.
+const angles = brief.content.suggestedAngles.length > 0 ? brief.content.suggestedAngles : ['carriera']
+let sampleIndex = 0
 const { location } = jobOffer.payload
 const adLocation: Ad['location'] = {
   label: `${location.locality} (${location.province_code})`,
@@ -61,6 +63,7 @@ let failures = 0
 for (const channel of listChannelsWithFormats(db)) {
   for (const { format } of channel.formats) {
     const now = new Date().toISOString()
+    const angle = angles[sampleIndex++ % angles.length] ?? 'carriera'
     // Transient Ad: generation only needs its fields; nothing is persisted except generation_runs.
     const ad: Ad = {
       id: `sample_${channel.id}_${format}`,
@@ -96,6 +99,7 @@ for (const channel of listChannelsWithFormats(db)) {
       if (!(err instanceof AppError)) throw err
       failures++
       console.error(`ERR ${channel.id}-${format}: ${err.message}`, err.details ?? '')
+      for (const run of runsQuery.all({ ref: ad.id })) console.error(`    attempt ${run.attempt} ${run.outcome}: ${run.issues}`)
     }
   }
 }

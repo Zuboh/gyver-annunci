@@ -1,0 +1,133 @@
+{
+  "jobOfferId": "jo_001",
+  "channel": "whatsapp",
+  "format": "text",
+  "angle": "tipo impianti",
+  "location": {
+    "label": "Orzinuovi (BS)",
+    "municipality": "Orzinuovi",
+    "province": "Brescia",
+    "provinceCode": "BS",
+    "region": "Lombardia",
+    "country": "IT"
+  },
+  "model": "gpt-4o-mini-2024-07-18",
+  "promptVersion": "messaging@v4",
+  "generatedAt": "2026-11-09T16:45:59.643Z",
+  "brief": {
+    "id": "brief_e78088c0-1561-4de9-bb09-474ddab61b93",
+    "model": "gpt-4o-mini-2024-07-18",
+    "promptVersion": "brief@v4",
+    "content": {
+      "roleTitle": "Tecnico elettricista fotovoltaico",
+      "companyName": "AB Group SpA",
+      "companyPitch": "AB Group è multinazionale della cogenerazione e biogas. Fondata nel 1981, ha sede a Orzinuovi (Brescia) e conta oltre 1.700 dipendenti in 20 Paesi.",
+      "contractType": "Tempo indeterminato",
+      "salary": {
+        "min": 32000,
+        "max": 38000,
+        "currency": "EUR"
+      },
+      "experience": {
+        "minYears": 3,
+        "maxYears": 5
+      },
+      "skills": [
+        "Fotovoltaico industriale",
+        "Cabine secondarie - MT/BT"
+      ],
+      "responsibilities": [
+        "Effettua sopralluoghi tecnici in cantiere.",
+        "Supporta il coordinamento delle attività di montaggio delle strutture e moduli FV.",
+        "Verifica la corretta esecuzione delle attività secondo disegni e indicazioni ricevute.",
+        "Esegui collaudi attraverso verifiche preliminari e test funzionali.",
+        "Supporta la verifica tecnica delle attività dei subappaltatori.",
+        "Verifica il rispetto delle regole HSE sulle attività presidiate.",
+        "Esegui interventi in campo per la manutenzione in caso di guasti tecnici."
+      ],
+      "requirements": [
+        "Diploma tecnico in elettrotecnica.",
+        "Esperienza in installazione e avviamento di impianti FV.",
+        "Capacità di leggere schemi elettrici e layout FV.",
+        "Conoscenza di inverter, BESS e strumentazione di verifica impianti FV.",
+        "Esperienza su impianti FV sopra i 100 kW.",
+        "Esperienza su impianti di media tensione."
+      ],
+      "benefits": [
+        "Indennità di 60 € lordi a notte per le trasferte multi-giorno",
+        "Ticket da 13 € per ogni giorno lavorato"
+      ],
+      "sellingPoints": [
+        "RAL da 32.000 a 38.000 €",
+        "Multinazionale con oltre 1.700 dipendenti in 20 Paesi",
+        "Carriera nella costruzione e avviamento di grandi impianti fotovoltaici.",
+        "Impianti fotovoltaici di grandi dimensioni sopra i 100 kW."
+      ],
+      "workArea": "Orzinuovi (BS)",
+      "siteAddress": "Via Artigianato, 27, 25034 Orzinuovi (BS)",
+      "travel": "Trasferte giornaliere frequenti e sporadiche trasferte di più giorni.",
+      "doNotSay": [
+        "Trasferte giornaliere frequenti (senza indennità)",
+        "Ore di viaggio oltre le 8 ore giornaliere pagate all'85% della paga base come da CCNL"
+      ],
+      "suggestedAngles": [
+        "retribuzione",
+        "dimensione dell'azienda",
+        "tipo impianti"
+      ]
+    }
+  },
+  "content": {
+    "title": "Tecnico elettricista fotovoltaico: installazione e collaudi",
+    "companyName": "AB Group SpA",
+    "badges": [
+      "Multinazionale: oltre 1.700 dipendenti",
+      "RAL da 32.000 a 38.000 €",
+      "Tempo indeterminato",
+      "Orzinuovi (BS) + trasferte"
+    ],
+    "sections": [
+      {
+        "heading": "Azienda e offerta",
+        "bullets": [
+          "Assunzione diretta a tempo indeterminato in AB Group SpA.",
+          "Attività su impianti fotovoltaici sopra i 100 kW.",
+          "Trasferte giornaliere frequenti e sporadiche di più giorni."
+        ]
+      },
+      {
+        "heading": "Cosa farai",
+        "bullets": [
+          "Effettui sopralluoghi tecnici in cantiere.",
+          "Supporti il coordinamento del montaggio di impianti FV.",
+          "Esegui collaudi e test funzionali con strumentazione specifica."
+        ]
+      },
+      {
+        "heading": "Cosa offre l'azienda",
+        "bullets": [
+          "RAL tra 32.000 e 38.000 € a seconda dell'esperienza.",
+          "Indennità di 60 € lordi per trasferte multi-giorno.",
+          "Ticket da 13 € per ogni giorno lavorato."
+        ]
+      },
+      {
+        "heading": "Il tuo profilo",
+        "bullets": [
+          "Richiesta esperienza di 3-5 anni in impianti FV.",
+          "Diploma tecnico in elettrotecnica necessario.",
+          "Capacità di leggere schemi e layout FV imprescindibile."
+        ]
+      }
+    ],
+    "creative": null
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "outcome": "ok",
+      "issues": [],
+      "created_at": "2026-11-09T16:46:05.752Z"
+    }
+  ]
+}

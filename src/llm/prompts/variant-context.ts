@@ -12,7 +12,13 @@ function briefFor(input: GenerateVariantContentInput): BriefContent {
 function constraintsText({ channelFormat }: GenerateVariantContentInput): string {
   const { maxLength, maxItems, requiredFields, image } = channelFormat.constraints
   const lines: string[] = []
-  for (const [path, max] of Object.entries(maxLength)) lines.push(`- ${path}: massimo ${max} caratteri`)
+  for (const [path, max] of Object.entries(maxLength)) {
+    // Models overshoot character limits and count words better: on short fields ask for a
+    // target at about 2/3 of the limit, with a word budget.
+    const target = Math.floor((max * 2) / 3)
+    const hint = max <= 300 ? ` (punta a circa ${target} caratteri, ${Math.max(2, Math.floor(target / 8))} parole)` : ''
+    lines.push(`- ${path}: massimo ${max} caratteri${hint}`)
+  }
   for (const [path, max] of Object.entries(maxItems)) lines.push(`- ${path}: massimo ${max} elementi`)
   if (requiredFields.length > 0) lines.push(`- campi obbligatori e non vuoti: ${requiredFields.join(', ')}`)
   if (image) {
@@ -52,10 +58,13 @@ ${JSON.stringify(briefFor(input), null, 2)}${feedbackText(input)}`
 
 /** Rules every channel prompt shares. */
 export const commonRules = `Regole comuni:
-- Scrivi in italiano, dando del tu al candidato.
-- Usa solo i fatti del Brief: non inventare cifre, benefit, nomi o requisiti.
+- Scrivi in italiano, dando del tu al candidato. Il candidato ha già l'esperienza indicata nel Brief: parlagli da professionista, non da principiante (mai "inizia la tua carriera"). Parli a nome di Gyver, non dell'azienda: l'azienda è sempre in terza persona (mai "noi", "siamo", "offriamo", "cerchiamo").
+- Usa solo i fatti del Brief: non inventare cifre, benefit, nomi o requisiti. Niente promesse generiche che il Brief non contiene (es. "crescita professionale", "ambiente internazionale", "opportunità uniche").
+- Preferisci il fatto concreto all'aggettivo: numeri, tipo di impianti, attività precise.
 - Non citare mai, nemmeno parafrasate, le voci di "doNotSay".
-- Se citi la retribuzione, usa esattamente i valori di salary del Brief.
-- Il Luogo da mostrare è l'etichetta indicata, non altro.
-- Costruisci il messaggio attorno all'Angolo indicato: deve essere il primo motivo che il lettore incontra.
+- Retribuzione: scrivila solo con i numeri di salary del Brief, in forma estesa con il punto delle migliaia e "€" (es. "RAL da 32.000 a 38.000 €"), mai abbreviata con "k".
+- Il nome dell'azienda è companyName del Brief, identico.
+- Il Luogo da mostrare è l'etichetta indicata, non altro. Se il Brief indica trasferte, citale in modo neutro.
+- Costruisci il messaggio attorno all'Angolo indicato, usando i sellingPoints del Brief che lo sostengono: il titolo o la prima riga devono dare al tecnico un motivo concreto legato all'Angolo.
+- Testo semplice: niente markdown (asterischi, cancelletti per titoli).
 - Rispetta ogni vincolo di lunghezza e numero di elementi: è meglio un testo più corto che uno troncato.`

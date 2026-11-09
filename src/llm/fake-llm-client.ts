@@ -80,6 +80,7 @@ function result<T>(content: T): LlmResult<T> {
 
 export const fakeBrief: BriefContent = {
   roleTitle: 'Tecnico Fotovoltaico',
+  companyName: 'AB Group SpA',
   companyPitch:
     'AB Group è una multinazionale con oltre 1.700 dipendenti e più di 40 anni di storia in impianti industriali, cogenerazione e fotovoltaico.',
   contractType: 'Tempo indeterminato',

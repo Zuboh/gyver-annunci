@@ -1,0 +1,109 @@
+{
+  "jobOfferId": "jo_001",
+  "channel": "instagram",
+  "format": "image_text",
+  "angle": "carriera",
+  "location": {
+    "label": "Orzinuovi (BS)",
+    "municipality": "Orzinuovi",
+    "province": "Brescia",
+    "provinceCode": "BS",
+    "region": "Lombardia",
+    "country": "IT"
+  },
+  "model": "gpt-4o-mini-2024-07-18",
+  "promptVersion": "social_ad@v1",
+  "generatedAt": "2026-11-09T16:37:19.341Z",
+  "brief": {
+    "id": "brief_74f45062-9836-49ad-bfb9-ce9e6c65dd82",
+    "model": "gpt-4o-mini-2024-07-18",
+    "promptVersion": "brief@v1",
+    "content": {
+      "roleTitle": "Tecnico elettricista fotovoltaico",
+      "companyPitch": "AB Group — multinazionale della cogenerazione e biogas. Fondato nel 1981, è l'azienda leader italiana nei settori della cogenerazione, biogas e rinnovabili. Oltre 1.700 dipendenti e presenza in 20 Paesi.",
+      "contractType": "Tempo indeterminato",
+      "salary": {
+        "min": 32000,
+        "max": 38000,
+        "currency": "EUR"
+      },
+      "experience": {
+        "minYears": 3,
+        "maxYears": 5
+      },
+      "skills": [
+        "Fotovoltaico industriale",
+        "Cabine secondarie - MT/BT"
+      ],
+      "responsibilities": [
+        "Effettuare sopralluoghi tecnici in cantiere",
+        "Supportare il coordinamento delle attività di montaggio",
+        "Verificare la corretta esecuzione delle attività",
+        "Eseguire le attività di collaudo",
+        "Supportare la verifica tecnica delle attività dei subappaltatori",
+        "Verificare il rispetto delle regole HSE",
+        "Eseguire interventi in campo per la manutenzione"
+      ],
+      "requirements": [
+        "Diploma tecnico in elettrotecnica",
+        "Almeno 3-4 anni di esperienza in installazione e avviamento di impianti FV",
+        "Capacità di leggere schemi elettrici e layout FV",
+        "Conoscenza di inverter, BESS e strumentazione di verifica impianti FV",
+        "Esperienza su impianti FV sopra i 100 kW",
+        "Esperienza su impianti di media tensione"
+      ],
+      "benefits": [
+        "RAL da 32.000 a 38.000 € in base all'esperienza",
+        "Indennità di 60 € lordi a notte per le trasferte multi-giorno",
+        "Ticket da 13 € per ogni giorno lavorato"
+      ],
+      "sellingPoints": [
+        "Carriera nella costruzione e avviamento di grandi impianti fotovoltaici",
+        "Opportunità in un'azienda leader di settore",
+        "Ambiente di lavoro internazionale"
+      ],
+      "workArea": "Orzinuovi (BS)",
+      "siteAddress": "Via Artigianato 27, 25034 Orzinuovi (BS)",
+      "travel": "Trasferte giornaliere frequenti (senza indennità)",
+      "doNotSay": [
+        "Trasferte non indennizzate",
+        "Percentuali di straordinari",
+        "Note per il recruiter"
+      ],
+      "suggestedAngles": [
+        "carriera",
+        "multinazionale",
+        "stipendio"
+      ]
+    }
+  },
+  "content": {
+    "caption": "💼 Il tuo futuro inizia qui! 🔋 Unisciti ad AB Group come Tecnico elettricista fotovoltaico. In 40 anni siamo diventati leader nel settore delle rinnovabili e cerchiamo te per far crescere la nostra squadra!\n\n👷‍♂️ Sopralluoghi tecnici? Check! Montaggio impianti? Check! 3-5 anni di esperienza ti rendono il candidato ideale!\n\n🚀 Offriamo un contratto a tempo indeterminato e una RAL tra 32.000 e 38.000 €! Un'ottima carriera ti aspetta ad Orzinuovi (BS).",
+    "hashtags": [
+      "#Lavoro",
+      " #Tecnico",
+      " #Fotovoltaico"
+    ],
+    "callToAction": "Candidati ora",
+    "creative": {
+      "overlayTexts": [
+        "Tecnico elettricista",
+        "Fotovoltaico",
+        "Carriera stabile",
+        "Lavora con noi!"
+      ],
+      "highlightWord": "Carriera",
+      "photoSubject": "Tecnico elettricista in cantiere mentre esamina un impianto fotovoltaico.",
+      "width": 1080,
+      "height": 1080
+    }
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "outcome": "ok",
+      "issues": [],
+      "created_at": "2026-11-09T16:37:23.078Z"
+    }
+  ]
+}

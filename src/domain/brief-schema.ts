@@ -5,6 +5,8 @@ import { z } from 'zod'
 export const briefContentSchema = z.object({
   /** Publishable job title, e.g. "Tecnico Fotovoltaico". */
   roleTitle: z.string(),
+  /** Company name exactly as in the Job Offer, e.g. "AB Group SpA". */
+  companyName: z.string(),
   /** Publishable company presentation (no internal data). */
   companyPitch: z.string(),
   contractType: z.string().nullable(),

@@ -1,0 +1,145 @@
+{
+  "jobOfferId": "jo_001",
+  "channel": "whatsapp",
+  "format": "image_text",
+  "angle": "multinazionale",
+  "location": {
+    "label": "Orzinuovi (BS)",
+    "municipality": "Orzinuovi",
+    "province": "Brescia",
+    "provinceCode": "BS",
+    "region": "Lombardia",
+    "country": "IT"
+  },
+  "model": "gpt-4o-mini-2024-07-18",
+  "promptVersion": "messaging@v2",
+  "generatedAt": "2026-11-09T16:42:21.034Z",
+  "brief": {
+    "id": "brief_b9726816-4c75-4dc8-a249-a8aa87e95aff",
+    "model": "gpt-4o-mini-2024-07-18",
+    "promptVersion": "brief@v2",
+    "content": {
+      "roleTitle": "Tecnico elettricista fotovoltaico",
+      "companyName": "AB Group SpA",
+      "companyPitch": "AB Group è un'azienda leader italiana nei settori della cogenerazione, biogas e rinnovabili, fondata nel 1981. Ha sede a Orzinuovi (Brescia) e conta oltre 1.700 dipendenti, operando in 20 Paesi.",
+      "contractType": "Tempo indeterminato",
+      "salary": {
+        "min": 32000,
+        "max": 38000,
+        "currency": "EUR"
+      },
+      "experience": {
+        "minYears": 3,
+        "maxYears": 5
+      },
+      "skills": [
+        "Fotovoltaico industriale",
+        "Cabine secondarie - MT/BT"
+      ],
+      "responsibilities": [
+        "Effettua sopralluoghi tecnici in cantiere e raccogli informazioni dal campo.",
+        "Supporta il coordinamento delle attività di montaggio delle strutture e cablaggi.",
+        "Verifica la corretta esecuzione delle attività secondo disegni e indicazioni ricevute.",
+        "Esegui le attività di collaudo attraverso test funzionali e verifiche prestazionali.",
+        "Supporta la verifica tecnica delle attività dei subappaltatori segnalando non conformità.",
+        "Verifica il rispetto delle regole HSE e segnalare situazioni di rischio.",
+        "Esegui interventi in campo per la manutenzione in caso di guasti."
+      ],
+      "requirements": [
+        "Diploma tecnico in elettrotecnica",
+        "Esperienza in installazione e avviamento di impianti FV",
+        "Capacità di leggere schemi elettrici e layout FV",
+        "Conoscenza di inverter, BESS e strumentazione di verifica impianti FV",
+        "Esperienza su impianti FV sopra i 100 kW",
+        "Esperienza su impianti di media tensione"
+      ],
+      "benefits": [
+        "Indennità di 60 € lordi a notte per le trasferte multi-giorno",
+        "Ticket da 13 € per ogni giorno lavorato"
+      ],
+      "sellingPoints": [
+        "Azienda attiva in 20 Paesi",
+        "Multinazionale con oltre 1.700 dipendenti",
+        "RAL da 32.000 a 38.000 €"
+      ],
+      "workArea": "Orzinuovi (BS)",
+      "siteAddress": "Via Artigianato 27, 25034 Orzinuovi (BS)",
+      "travel": "Trasferte giornaliere frequenti e sporadiche trasferte di più giorni",
+      "doNotSay": [
+        "Trasferte giornaliere frequenti (senza indennità)"
+      ],
+      "suggestedAngles": [
+        "stipendio",
+        "multinazionale",
+        "carriera"
+      ]
+    }
+  },
+  "content": {
+    "title": "Tecnico elettricista fotovoltaico: installazioni e collaudi",
+    "companyName": "AB Group SpA",
+    "badges": [
+      "Multinazionale",
+      "RAL da 32.000 a 38.000 €",
+      "Tempo indeterminato",
+      "Orzinuovi (BS)",
+      "Impianti FV sopra 100 kW"
+    ],
+    "sections": [
+      {
+        "heading": "AB Group SpA e l'offerta",
+        "bullets": [
+          "Multinazionale attiva in 20 Paesi.",
+          "Sede a Orzinuovi, con trasferte frequenti.",
+          "Partendo da una solida esperienza di oltre 40 anni."
+        ]
+      },
+      {
+        "heading": "Cosa farai",
+        "bullets": [
+          "Effettua sopralluoghi tecnici in cantiere.",
+          "Supporta il coordinamento del montaggio e cablaggi.",
+          "Esegui collaudi e test funzionali.",
+          "Verifica il rispetto delle indicazioni di progetto.",
+          "Gestisci la manutenzione in caso di guasti."
+        ]
+      },
+      {
+        "heading": "Quello che ti offre l'azienda",
+        "bullets": [
+          "Contratto a tempo indeterminato.",
+          "RAL da 32.000 a 38.000 €.",
+          "Indennità di 60 € per trasferte più lunghe.",
+          "Ticket da 13 € per giorno lavorato."
+        ]
+      },
+      {
+        "heading": "Il tuo profilo",
+        "bullets": [
+          "Esperienza tra 3 e 5 anni nel settore.",
+          "Diploma tecnico in elettrotecnica.",
+          "Conoscenza impianti FV e media tensione.",
+          "Capacità di leggere schemi elettrici."
+        ]
+      }
+    ],
+    "creative": {
+      "overlayTexts": [
+        "Tecnico elettricista",
+        "fotovoltaico: installazioni e collaudi"
+      ],
+      "highlightWord": "fotovoltaico",
+      "photoSubject": "Tecnico al lavoro su un impianto fotovoltaico industriale durante un collaudo.",
+      "width": 1240,
+      "height": 1754
+    }
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "outcome": "ok",
+      "issues": [],
+      "created_at": "2026-11-09T16:42:26.355Z"
+    }
+  ]
+}
