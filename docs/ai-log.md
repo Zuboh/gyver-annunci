@@ -34,3 +34,14 @@
 - La creazione con più Angoli genera in parallelo (`Promise.allSettled`), quindi una coda ordinata nel fake si mescolerebbe: il fake viene programmato in base a `input.angle` con `variantFallback`.
 - Bug reali trovati: nessuno. Tutti i test sono passati al primo giro. Per controllare che non fossero test vuoti ho rotto il codice di proposito, un caso alla volta, e ogni volta i test giusti sono falliti: tornare a `t.UnionEnum` (23 test rossi, perché anche `?channel=` riceve `status=draft` e l'elenco esce vuoto), `MAX_ATTEMPTS = 1` (3 rossi), Brief mai riusato (1 rosso), regola dell'indirizzo spenta (3 rossi).
 - Limite: le righe di `generation_runs` (esiti `invalid`/`error`) non sono esposte dall'API, quindi i test controllano il `runId` nel 502 ma non il contenuto della tabella.
+
+## 2026-11-09 — Fase 4 step 4: verifica finale e note del coordinatore
+- Verifica da stato pulito (agent-tester): `rm -rf node_modules && bun install && bun run db:reset && bun test` → 41 pass, 0 fail; `bunx tsc --noEmit` pulito. Dopo i test aggiunti: 44 pass, 0 fail, 124 expect() in 6 file.
+- Test aggiunti in `test/salary-channels.test.ts`, sempre attraverso `createApp`: Versione manuale Indeed con `salary` "RAL da 45.000 €" (fuori dal range 32.000–38.000 € di jo_001) → 422 `INVALID_CONTENT` con issue su `salary` e nessuna Versione salvata; `salary` "RAL da 32.000 a 38.000 €" → 201, Versione manuale n. 2; `GET /api/channels` → 4 Canali, ognuno con almeno un Formato.
+- Smoke manuale del server (`PORT=3000 bun run dev`), solo endpoint in lettura: `GET /api/ads?channel=indeed` → l'Annuncio Indeed del seed; `GET /` → 200; `GET /api/ads/does-not-exist` → `{"error":{"code":"NOT_FOUND","message":"Annuncio non trovato."}}`. Dopo lo stop del server, `db:reset` per lasciare `data/gyver.db` appena seminato.
+- Note del coordinatore:
+  - Step 1: il primo agent è morto per un errore di rete (ENOTFOUND); un secondo agent ha ripreso dai file parziali.
+  - Step 2: A e B in parallelo senza nessuna collisione sui file, grazie alle firme concordate scritte nei prompt di dispatch.
+  - Step 3: il tester non ha trovato bug reali, ma ha dimostrato la sensibilità dei test con mutazioni (revert a `t.UnionEnum` → 23 rossi, `MAX_ATTEMPTS = 1` → 3, Brief mai riusato → 1, regola dell'indirizzo spenta → 3).
+  - Lo smoke manuale del tester ha scritto una riga `generation_runs` nel DB versionato; intercettato e resettato prima del commit. Lezione: mai chiamare endpoint di generazione contro `data/gyver.db`.
+  - Il test della regola sulla retribuzione, che mancava, è stato aggiunto nello step 4.
