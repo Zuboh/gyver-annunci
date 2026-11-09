@@ -12,13 +12,24 @@ import type {
   Format,
   JobOffer,
 } from '../domain/types'
-import { collectTextFields, salaryIssues, streetAddressIssues } from './business-rules'
+import {
+  benefitConditionIssues,
+  collectTextFields,
+  salaryIssues,
+  salaryWordingIssues,
+  streetAddressIssues,
+} from './business-rules'
 
 export interface ValidationContext {
   channel: Channel
   channelFormat: ChannelFormat
   /** Source of truth for business rules (salary coherence, street address to forbid). */
   jobOffer: JobOffer
+  /**
+   * Who produced the content (default "manual"). LLM output also gets the stricter wording
+   * rules (salary forms, allowance conditions); manual Versions are an editorial choice.
+   */
+  origin?: 'llm' | 'manual'
 }
 
 export type ValidationResult =
@@ -51,6 +62,9 @@ export function validateContent(content: unknown, ctx: ValidationContext): Valid
     ...creativeIssues(parsed.data.creative, ctx.channelFormat),
     ...streetAddressIssues(fields, ctx.channel, ctx.jobOffer.payload.location),
     ...salaryIssues(fields, ctx.jobOffer.payload),
+    ...(ctx.origin === 'llm'
+      ? [...salaryWordingIssues(fields, ctx.jobOffer.payload), ...benefitConditionIssues(fields, ctx.jobOffer.payload)]
+      : []),
   ]
   return issues.length > 0 ? { ok: false, issues } : { ok: true, content: parsed.data }
 }
@@ -139,12 +153,23 @@ function creativeIssues(creative: Creative | null, channelFormat: ChannelFormat)
       })
     }
   }
-  const highlight = creative.highlightWord?.trim().toLowerCase()
-  if (highlight && !creative.overlayTexts.some((text) => text.toLowerCase().includes(highlight))) {
+  const highlight = creative.highlightWord?.trim()
+  if (highlight && !/^\S+$/.test(highlight)) {
     issues.push({
       path: 'creative.highlightWord',
-      message: 'La parola evidenziata deve comparire in uno dei testi in sovrimpressione.',
+      message: 'La parola evidenziata deve essere una sola parola, senza spazi.',
+    })
+  } else if (highlight && !creative.overlayTexts.some((text) => containsWord(text, highlight))) {
+    issues.push({
+      path: 'creative.highlightWord',
+      message: 'La parola evidenziata deve comparire come parola intera in uno dei testi in sovrimpressione.',
     })
   }
   return issues
+}
+
+/** Case-insensitive whole-word match ("Fotovoltaico" in "Tecnico Fotovoltaico", not "Fotov"). */
+function containsWord(text: string, word: string): boolean {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu').test(text)
 }

@@ -19,14 +19,14 @@ Campi:
 - salary: RAL minima e massima esattamente come nella Job Offer (stessi numeri, stessa valuta). Se manca, null.
 - experience: anni minimi e massimi esattamente come nei campi numerici della Job Offer.
 - skills: le competenze tecniche richieste, brevi.
-- responsibilities: 4-7 attività del ruolo, ciascuna in una frase breve che inizia con un verbo alla seconda persona singolare (es. "Esegui collaudi e test funzionali sugli impianti"), mantenendo gli oggetti concreti (collaudo, avviamento, MT/BT, manutenzione guasti).
+- responsibilities: 4-7 attività del ruolo, ciascuna in una frase breve che inizia con un verbo al presente, seconda persona singolare ("Esegui", "Coordini", "Verifichi", "Fai", "Segui", "Controlli"; da effettuare: "effettui"; mai la terza persona "Effettua", "Supporta", "Verifica"), mantenendo gli oggetti concreti (collaudo, avviamento, MT/BT, manutenzione guasti).
 - requirements: titolo di studio, conoscenze e tipi di impianto richiesti. Non indicare qui gli anni di esperienza: stanno solo in experience.
-- benefits: vantaggi economici e pratici pubblicabili diversi da RAL e contratto (es. ticket, indennità), con le cifre della Job Offer.
+- benefits: vantaggi economici e pratici pubblicabili diversi da RAL e contratto (es. ticket, indennità), ciascuno con la cifra e la condizione completa della Job Offer: quando e per cosa spetta (es. "Indennità di 60 € lordi a notte per le trasferte di più giorni", non "Indennità per le trasferte").
 - travel: le trasferte descritte in modo neutro (frequenza e durata), senza le condizioni economiche sfavorevoli. null se non ci sono trasferte.
 - workArea: solo comune e sigla provincia, es. "Orzinuovi (BS)". Mai via, civico o CAP.
 - siteAddress: indirizzo completo della sede (via, civico, CAP, comune, provincia) se presente, altrimenti null. Servirà solo al campo indirizzo delle job board.
-- suggestedAngles: 3 Angoli diversi tra loro (una o due parole, minuscolo, es. "carriera", "stipendio", "multinazionale"), scelti tra i temi che la Job Offer sostiene con fatti: retribuzione, dimensione dell'azienda, tipo e taglia degli impianti, contratto, prospettiva di carriera dichiarata nel titolo o nella descrizione del ruolo.
-- sellingPoints: 4-5 voci. Le prime tre corrispondono, nello stesso ordine, ai 3 suggestedAngles: ciascuna esprime quell'Angolo con un fatto della Job Offer (es. "RAL da 32.000 a 38.000 €" per stipendio, "Multinazionale con oltre 1.700 dipendenti in 20 Paesi" per multinazionale, la prospettiva di carriera con le parole della Job Offer per carriera). Le altre aggiungono fatti forti.
+- suggestedAngles: scrivili prima dei sellingPoints. 3 Angoli diversi tra loro, ciascuno un nome di una o due parole in minuscolo, come "carriera", "stipendio", "multinazionale", "grandi impianti", "posto fisso". Ogni Angolo deve essere sostenuto da un fatto della Job Offer. Se il titolo o la descrizione del ruolo parlano di carriera, uno degli Angoli è "carriera".
+- sellingPoints: 4-5 voci, con fatti della Job Offer e senza aggettivi aggiunti. sellingPoints[0] sostiene suggestedAngles[0], sellingPoints[1] sostiene suggestedAngles[1], sellingPoints[2] sostiene suggestedAngles[2]: per stipendio la RAL, per multinazionale dimensione e Paesi, per carriera la prospettiva di carriera con le parole della Job Offer, per grandi impianti la taglia degli impianti. Le voci successive aggiungono altri fatti forti.
 
 doNotSay (dati da non pubblicare):
 - Rileggi una per una le righe di retribuzione, benefit, trasferte, orari e note della Job Offer e per ciascuna decidi: pubblicabile oppure doNotSay. Va in doNotSay ogni condizione sfavorevole o interna, scritta con il fatto preciso della Job Offer: ad esempio una trasferta "senza indennità", ore pagate a una percentuale ridotta della paga base, una nota per il recruiter.
@@ -34,7 +34,7 @@ doNotSay (dati da non pubblicare):
 - Il contenuto di doNotSay non compare in nessun altro campo del Brief, nemmeno parafrasato.`
 
 export const briefPrompt: BriefPrompt = {
-  version: 'brief@v4',
+  version: 'brief@v5',
   build: ({ jobOffer }) => ({
     system,
     user: `Job Offer (JSON):\n${JSON.stringify(jobOffer.payload, null, 2)}`,

@@ -55,9 +55,20 @@ const SALARY_WORD_BEFORE = /\b(?:ral|retribuzione|stipendio|salario)\b\D{0,20}$/
 /** Below this an amount is a daily/benefit figure (ticket, indennità), not a yearly salary. */
 const MIN_YEARLY_AMOUNT = 1000
 
+interface SalaryMatch {
+  value: number
+  start: number
+  end: number
+}
+
 /** Yearly-salary-sized money amounts in `text` (with € / EUR / RAL next to the number). */
 export function salaryAmounts(text: string): number[] {
-  const amounts: number[] = []
+  return salaryMatches(text).map((m) => m.value)
+}
+
+/** Like salaryAmounts, with the position of each amount in `text`. */
+function salaryMatches(text: string): SalaryMatch[] {
+  const amounts: SalaryMatch[] = []
   for (const match of text.matchAll(AMOUNT)) {
     const start = match.index
     const end = start + match[0].length
@@ -67,7 +78,7 @@ export function salaryAmounts(text: string): number[] {
       CURRENCY_BEFORE.test(before) || CURRENCY_AFTER.test(after) || SALARY_WORD_BEFORE.test(before)
     const digits = match[1] ?? ''
     const value = Number(digits.replace(/[.'’]/g, '')) * (match[2] ? 1000 : 1)
-    if (isMoney && value >= MIN_YEARLY_AMOUNT) amounts.push(value)
+    if (isMoney && value >= MIN_YEARLY_AMOUNT) amounts.push({ value, start, end })
   }
   return amounts
 }
@@ -99,4 +110,71 @@ export function salaryIssues(fields: TextField[], offer: JobOfferPayload): Conte
     }
   }
   return issues
+}
+
+// ---------------------------------------------------------------------------
+// Stricter rules for LLM output only (validateContent with origin "llm"). Manual Versions,
+// like the PDF examples in the seed ("RAL iniziale da €38'000 + indennità"), are an editorial
+// choice of the Team Delivery and are not checked by these two rules.
+// ---------------------------------------------------------------------------
+
+const FROM_BEFORE = /\b(?:da|tra)\s*(?:€|eur|euro)?\s*$/i
+const UP_TO_BEFORE = /\bfino\s+a\s*(?:€|eur|euro)?\s*$/i
+const RANGE_JOIN = /^\s*(?:€|eur|euro)?\s*(?:a|e|-|–|—)\s*(?:€|eur|euro)?\s*$/i
+
+/**
+ * Salary shown only as "da <min> a <max>" (or "<min> - <max>", "tra <min> e <max>"),
+ * "fino a <max>" or "da <min>". Rejects e.g. "RAL da 38.000 €" (suggests 38.000 as the
+ * minimum) and a bare "RAL 38.000 €". Amounts outside the range are left to salaryIssues.
+ */
+export function salaryWordingIssues(fields: TextField[], offer: JobOfferPayload): ContentIssue[] {
+  const { ral_min: min, ral_max: max } = offer
+  if (min === null || max === null) return []
+  const allowed = `usa "RAL da ${euro(min)} a ${euro(max)}", "RAL fino a ${euro(max)}" o "RAL da ${euro(min)}"`
+  const issues: ContentIssue[] = []
+  for (const { path, text } of fields) {
+    const matches = salaryMatches(text)
+    matches.forEach((m, i) => {
+      if (m.value < min || m.value > max) return
+      const before = text.slice(Math.max(0, m.start - 20), m.start)
+      const prev = matches[i - 1]
+      const next = matches[i + 1]
+      const startsRange = next !== undefined && next.value === max && RANGE_JOIN.test(text.slice(m.end, next.start))
+      const endsRange = prev !== undefined && prev.value === min && RANGE_JOIN.test(text.slice(prev.end, m.start))
+      const ok =
+        (m.value === min && (FROM_BEFORE.test(before) || startsRange)) ||
+        (m.value === max && (UP_TO_BEFORE.test(before) || endsRange))
+      if (!ok) {
+        issues.push({ path, message: `Retribuzione ${euro(m.value)} scritta in modo fuorviante: ${allowed}.` })
+      }
+    })
+  }
+  return issues
+}
+
+const ALLOWANCE = /indennit[àa]/i
+/** Conditions an allowance can be tied to in a Job Offer, and how copy may express them. */
+const ALLOWANCE_CONDITIONS: { inOffer: RegExp; inCopy: RegExp; label: string }[] = [
+  { inOffer: /\bnott[ei]\b/i, inCopy: /\bnott[ei]\b|\bnotturn/i, label: 'a notte' },
+  { inOffer: /multi-?giorno|più giorni/i, inCopy: /multi-?giorno|più giorni|\d\s*\/\s*\d\s*giorni/i, label: 'trasferte di più giorni' },
+]
+
+/**
+ * An allowance ("indennità") keeps the condition the Job Offer attaches to it: if the offer
+ * pays it per night on multi-day trips, copy saying just "+ indennità" or "indennità per le
+ * trasferte" generalises it and is rejected.
+ */
+export function benefitConditionIssues(fields: TextField[], offer: JobOfferPayload): ContentIssue[] {
+  const offerLines = `${offer.compensation_package}\n${offer.location_and_hours}`
+    .split('\n')
+    .filter((line) => ALLOWANCE.test(line))
+  const conditions = ALLOWANCE_CONDITIONS.filter((c) => offerLines.some((line) => c.inOffer.test(line)))
+  if (conditions.length === 0) return []
+  const labels = conditions.map((c) => c.label).join(', ')
+  return fields
+    .filter(({ text }) => ALLOWANCE.test(text) && !conditions.some((c) => c.inCopy.test(text)))
+    .map(({ path }) => ({
+      path,
+      message: `Indennità senza la sua condizione: la Job Offer la prevede solo per ${labels}. Scrivila con la condizione o non citarla.`,
+    }))
 }

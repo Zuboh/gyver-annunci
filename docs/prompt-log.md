@@ -16,6 +16,8 @@ Da v2 i quattro prompt (brief, job_board, social_ad, messaging) sono versionati 
 | whatsapp-text | ok | ok | ok | ok |
 | **Totale** | 5/6 | 5/6 | 5/6 | 5/6 |
 
+v5 (sezione in fondo): 6/6 al primo tentativo in entrambi i giri, con validazione più severa.
+
 Il criterio di chiusura (tutti e 6 al primo tentativo) **non è stato raggiunto** entro il tetto di 3 iterazioni. Ogni versione ha un solo fallimento al primo tentativo, e cambia campione: `creative.highlightWord` assente dagli overlayTexts (v1, v4) e caption TikTok oltre i 150 caratteri (v2, v3).
 
 ## v1 (baseline: brief@v1, job_board@v1, social_ad@v1, messaging@v1)
@@ -85,3 +87,32 @@ Esito: TikTok passa al primo tentativo (caption di 88 caratteri). doNotSay compl
 - highlightWord: è il fallimento al primo tentativo più frequente (v1, v4). Con gpt-4o-mini l'istruzione nel prompt non basta. Opzioni: un pattern `^\S+$` nello schema della Creative (gli structured outputs imporrebbero una sola parola), oppure normalizzazione/validazione nel codice. Sono decisioni di schema e validazione, non di prompt.
 - Brief: dare gli esempi di Angolo solo come nomi ("carriera", "stipendio", "multinazionale"), non come temi; e richiedere "carriera" quando il titolo della Job Offer la nomina.
 - Retribuzione negli overlay brevi: ammettere solo "RAL fino a <max> €" o il range completo, mai "RAL da <max>".
+
+## v5 (brief@v5, job_board@v5, social_ad@v5, messaging@v5)
+
+Input: verdetto del giudice indipendente su v4. 5/6 accettati; whatsapp-image_text respinto con Fedeltà = 0 per `"Indennità di 60 € per le trasferte"`, che generalizza un'indennità prevista solo a notte nelle trasferte di più giorni. Il report `docs/judge-report-v4.md` citato dal coordinatore non è presente nella repo; ho lavorato dai 5 punti prioritari trasmessi nel messaggio.
+
+Modifiche alla validazione (nel codice, con test in `test/validation-rules.test.ts`, fake LLM, niente rete):
+1. `benefitConditionIssues` (business-rules): se la Job Offer lega un'indennità a una condizione ("a notte", "multi-giorno"/"più giorni"), ogni testo con "indennità" deve riportare almeno una di quelle condizioni. Le condizioni si ricavano dalla Job Offer, non sono fisse nel codice.
+2. `salaryWordingIssues`: le cifre nel range sono ammesse solo come "da <min> a <max>" (anche "<min> - <max>", "tra <min> e <max>"), "fino a <max>" o "da <min>". Respinti "RAL da 38.000 €", "RAL 38.000 €", "RAL 35.000 €".
+3. highlightWord: una sola parola (`^\S+$`), con corrispondenza a parola intera e senza distinzione tra maiuscole e minuscole negli overlayTexts ("Fotov" non passa più).
+- Scelta: le regole 1 e 2 valgono solo per l'output LLM (`ValidationContext.origin = 'llm'`, impostato dal generation service). Gli esempi del PDF nel seed contengono `"RAL iniziale da €38'000 + indennità"` e il seed li valida con `validateContent`: applicare le regole anche alle Versioni manuali avrebbe reso il seed non valido o costretto a modificare gli esempi pubblicati. La regola 3 vale per tutte le Versioni.
+
+Modifiche ai prompt:
+- Brief: `suggestedAngles` spostato nello schema prima di `sellingPoints`, così il modello sceglie prima gli Angoli. sellingPoints[i] sostiene suggestedAngles[i]. Nomi di Angolo di 1-2 parole solo come esempi di nome; "carriera" obbligatorio se la Job Offer ne parla. Benefit con cifra e condizione completa. responsibilities alla seconda persona del presente, con esempi di coniugazione.
+- Regole comuni: solo le tre forme di retribuzione ammesse; benefit sempre con la condizione completa, o non citati; mai "+ indennità".
+- Indeed: ogni bullet è una frase completa che termina con il punto.
+- WhatsApp: titolo e primo badge portano il fatto dell'Angolo indicato e di nessun altro.
+- Social: righe 3-4 degli overlay solo contratto, Luogo o attività (RAL solo con Angolo stipendio, dimensione dell'azienda solo con multinazionale); prima frase della caption sull'Angolo; TikTok parlato e al tu; nessun hashtag uguale al nome dell'Angolo; highlightWord come parola intera.
+
+Giri: 2 (tetto). Il primo giro v5 ha passato 6/6 al primo tentativo, ma l'allineamento sellingPoints/Angoli non era rispettato (nessun sellingPoint "carriera", primo badge WhatsApp sempre "Multinazionale"). Prima del secondo giro ho riordinato lo schema e rafforzato le istruzioni su badge e overlay, senza cambiare numero di versione; i campioni del primo giro sono stati sovrascritti.
+
+Esito (secondo giro, campioni in `docs/samples/*@v5/`): **6/6 al primo tentativo**. Angoli `["carriera", "stipendio", "internazionale"]` con sellingPoints allineati (`"Costruisci una carriera nella realizzazione di grandi impianti fotovoltaici."`). Benefit con condizione (`"Indennità di 60 € lordi a notte per le trasferte multi-giorno"`). doNotSay completo. Primo badge WhatsApp = Angolo (`"RAL fino a 38.000 €"`, `"Internazionale: 20 Paesi"`). Bullet Indeed con il punto finale. TikTok apre sulla carriera.
+
+Restano:
+- Coniugazione: `"Effetti sopralluoghi..."` (dovrebbe essere "Effettui") nel Brief e nei testi che lo riprendono; `"Coordina attività..."` su WhatsApp mescola le persone verbali.
+- whatsapp-image_text: `"Indennità di 60 € per trasferte multi-giorno"` passa la regola (condizione multi-giorno presente) ma perde "a notte". La regola chiede almeno una delle condizioni, non tutte.
+- TikTok (carriera): hashtag `"#carriera"` ripete l'Angolo; overlay con `"RAL da 32.000 a 38.000 €"` nonostante la regola sugli overlay.
+- instagram-image_text (internazionale): overlay `"Lavora all'internazionale"` (italiano scorretto) e `"RAL da 32.000 €"`.
+- Refusi: `"in cantiera"` (photoSubject), `"Nel 1981 è stata fondata"` (Indeed).
+- Le regole "hashtag ≠ Angolo" e "RAL negli overlay solo con Angolo stipendio" sono solo nel prompt: con gpt-4o-mini servirebbe un controllo nel codice.

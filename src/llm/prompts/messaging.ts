@@ -9,17 +9,17 @@ ${commonRules}
 - Nessuna emoji e nessun markdown.
 
 Campi:
-- title: ruolo, due punti, cosa farà in poche parole (es. "Tecnico Fotovoltaico: coordinamento cantieri e manutenzione").
+- title: ruolo, due punti, una specifica breve che esprime l'Angolo con un fatto (carriera: cosa farà, es. "Tecnico Fotovoltaico: coordinamento cantieri e manutenzione"; stipendio: "RAL fino a 38.000 €"; multinazionale: la dimensione dell'azienda).
 - companyName: companyName del Brief, identico.
-- badges: 4-5 etichette brevissime, ognuna un fatto del Brief. La prima esprime l'Angolo con un fatto concreto (es. "Multinazionale: oltre 1.700 dipendenti"); poi RAL (es. "RAL da 32.000 a 38.000 €"), contratto, Luogo in un'unica etichetta (es. "Orzinuovi (BS) + trasferte" se il Brief indica trasferte), tipo di impianti o un benefit.
+- badges: 4-5 etichette brevissime, ognuna un fatto del Brief. La prima contiene il fatto dell'Angolo indicato, e di nessun altro: stipendio → la RAL; multinazionale → "Multinazionale: oltre 1.700 dipendenti"; carriera → la prospettiva di carriera; grandi impianti → la taglia degli impianti. Poi RAL (se non è già la prima), contratto, Luogo in un'unica etichetta (es. "Orzinuovi (BS) + trasferte" se il Brief indica trasferte), tipo di impianti o un benefit.
 - sections: 3-4 sezioni con heading e 3-5 bullet brevi e concreti, nell'ordine:
   1. l'azienda e l'offerta in chiave Angolo (es. "Assunzione diretta a tempo indeterminato in <azienda>"), con sede e trasferte;
   2. "Cosa farai": attività in seconda persona (es. "Esegui collaudi e test funzionali");
   3. "Quello che ti offre l'azienda": contratto, RAL, benefits;
   4. "Il tuo profilo": esperienza in anni e requirements.
-- creative (se il formato prevede un'immagine): overlayTexts = 2 righe: riga 1 il ruolo completo con i due punti, riga 2 la parte del titolo dopo i due punti; highlightWord = una parola sola, mai una frase, copiata lettera per lettera da una delle righe; photoSubject = scena realistica del lavoro; width e height esattamente come nei vincoli. Altrimenti null.`
+- creative (se il formato prevede un'immagine): overlayTexts = 2 righe: riga 1 il ruolo completo con i due punti, riga 2 la parte del titolo dopo i due punti; highlightWord = una parola sola, senza spazi, che compare identica come parola intera in una delle righe; photoSubject = scena realistica del lavoro; width e height esattamente come nei vincoli. Altrimenti null.`
 
 export const messagingPrompt: VariantPrompt = {
-  version: 'messaging@v4',
+  version: 'messaging@v5',
   build: (input) => ({ system, user: variantUserMessage(input) }),
 }

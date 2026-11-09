@@ -1,0 +1,110 @@
+{
+  "jobOfferId": "jo_001",
+  "channel": "instagram",
+  "format": "image",
+  "angle": "stipendio",
+  "location": {
+    "label": "Orzinuovi (BS)",
+    "municipality": "Orzinuovi",
+    "province": "Brescia",
+    "provinceCode": "BS",
+    "region": "Lombardia",
+    "country": "IT"
+  },
+  "model": "gpt-4o-mini-2024-07-18",
+  "promptVersion": "social_ad@v5",
+  "generatedAt": "2026-11-09T16:56:38.095Z",
+  "brief": {
+    "id": "brief_f844aa53-9730-489a-bad4-85e80623dd6a",
+    "model": "gpt-4o-mini-2024-07-18",
+    "promptVersion": "brief@v5",
+    "content": {
+      "roleTitle": "Tecnico elettricista fotovoltaico",
+      "companyName": "AB Group SpA",
+      "companyPitch": "AB Group è un'azienda leader italiana nei settori della cogenerazione, biogas e rinnovabili. Fondata nel 1981, conta oltre 1.700 dipendenti ed è presente in 20 Paesi. La sede centrale si trova a Orzinuovi (Brescia), su oltre 40.000 mq.",
+      "contractType": "Tempo indeterminato",
+      "salary": {
+        "min": 32000,
+        "max": 38000,
+        "currency": "EUR"
+      },
+      "experience": {
+        "minYears": 3,
+        "maxYears": 5
+      },
+      "skills": [
+        "Fotovoltaico industriale",
+        "Cabine secondarie - MT/BT"
+      ],
+      "responsibilities": [
+        "Effetti sopralluoghi tecnici in cantiere e redigi report di sopralluogo.",
+        "Supporti il coordinamento delle attività di montaggio di strutture e moduli FV.",
+        "Verifichi la corretta esecuzione delle attività secondo disegni ricevuti.",
+        "Esegui attività di collaudo e test funzionali degli impianti.",
+        "Supporti la verifica tecnica delle attività dei subappaltatori.",
+        "Verifichi il rispetto delle regole HSE e segnali situazioni di rischio.",
+        "Esegui interventi di manutenzione in caso di guasti tecnici."
+      ],
+      "requirements": [
+        "Diploma tecnico in elettrotecnica",
+        "Esperienza in installazione e avviamento di impianti FV",
+        "Capacità di leggere schemi elettrici e layout FV",
+        "Conoscenza di inverter, BESS e strumentazione di verifica impianti FV",
+        "Esperienza su impianti FV sopra i 100 kW",
+        "Esperienza su impianti di media tensione."
+      ],
+      "benefits": [
+        "Indennità di 60 € lordi a notte per le trasferte multi-giorno",
+        "Ticket da 13 € per ogni giorno lavorato"
+      ],
+      "suggestedAngles": [
+        "carriera",
+        "stipendio",
+        "internazionale"
+      ],
+      "sellingPoints": [
+        "Costruisci una carriera nella realizzazione di grandi impianti fotovoltaici.",
+        "RAL da 32.000 a 38.000 € in base all'esperienza.",
+        "AB Group è presente in 20 Paesi tra Europa, Nord e Sud America.",
+        "Impianti fotovoltaici sopra i 100 kW sono parte delle tue attività.",
+        "L'azienda conta oltre 1.700 dipendenti. "
+      ],
+      "workArea": "Orzinuovi (BS)",
+      "siteAddress": "Via Artigianato 27, 25034 Orzinuovi (BS)",
+      "travel": "Trasferte giornaliere frequenti e sporadiche trasferte di più giorni.",
+      "doNotSay": [
+        "Trasferte giornaliere frequenti (senza indennità)",
+        "Ore di viaggio oltre le 8 ore giornaliere pagate all'85% della paga base come da CCNL."
+      ]
+    }
+  },
+  "content": {
+    "caption": "Sei un elettricista specializzato in fotovoltaico? RAL da 32.000 a 38.000 € per il ruolo di Tecnico elettricista fotovoltaico in AB Group SpA. Contratto a tempo indeterminato, sede a Orzinuovi (BS). Invia la tua candidatura!",
+    "hashtags": [
+      "#fotovoltaico",
+      "#elettricista",
+      "#lavoro"
+    ],
+    "callToAction": "Candidati ora",
+    "creative": {
+      "overlayTexts": [
+        "Tecnico Elettricista",
+        "RAL da 32.000 a 38.000 €",
+        "Tempo indeterminato",
+        "Orzinuovi (BS)"
+      ],
+      "highlightWord": "RAL",
+      "photoSubject": "Tecnico elettricista al lavoro su un impianto fotovoltaico in cantiera.",
+      "width": 1080,
+      "height": 1080
+    }
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "outcome": "ok",
+      "issues": [],
+      "created_at": "2026-11-09T16:56:42.011Z"
+    }
+  ]
+}

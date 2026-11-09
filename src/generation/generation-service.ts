@@ -158,7 +158,7 @@ export function createGenerationService(deps: { db: Database; llm: LlmClient }):
           ...(previousIssues && { previousIssues }),
         }),
       (content): Checked<ChannelContent> => {
-        const result = validateContent(content, { channel, channelFormat, jobOffer })
+        const result = validateContent(content, { channel, channelFormat, jobOffer, origin: 'llm' })
         return result.ok ? result : { ok: false, issues: result.issues }
       },
     )

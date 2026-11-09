@@ -26,7 +26,12 @@ export const briefContentSchema = z.object({
   responsibilities: z.array(z.string()),
   requirements: z.array(z.string()),
   benefits: z.array(z.string()),
-  /** Strongest hooks for a technician, used to pick and develop angles. */
+  /**
+   * Suggested angles (e.g. "carriera", "stipendio", "multinazionale"). Declared before
+   * sellingPoints so the model picks the angles first, then writes one sellingPoint per angle.
+   */
+  suggestedAngles: z.array(z.string()),
+  /** Strongest hooks for a technician; sellingPoints[i] supports suggestedAngles[i]. */
   sellingPoints: z.array(z.string()),
   /** Geographic area that may be shown (never the street address), e.g. "Orzinuovi (BS)". */
   workArea: z.string(),
@@ -38,8 +43,6 @@ export const briefContentSchema = z.object({
   travel: z.string().nullable(),
   /** Facts present in the Job Offer that must not appear in external copy. */
   doNotSay: z.array(z.string()),
-  /** Suggested angles (e.g. "carriera", "stipendio", "multinazionale"). */
-  suggestedAngles: z.array(z.string()),
 })
 
 export type BriefContent = z.infer<typeof briefContentSchema>
