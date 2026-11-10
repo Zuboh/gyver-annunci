@@ -64,7 +64,7 @@ Le skill `grill-with-docs`, `to-spec` e `implement` hanno `disable-model-invocat
 - **Script**: [`backend/scripts/gen-sample.ts`](backend/scripts/gen-sample.ts) genera un campione per Formato di Canale con il modello vero, su un DB in memoria; [`backend/scripts/db-reset.ts`](backend/scripts/db-reset.ts).
 - **Hook di Claude Code**: un hook ha bloccato una modifica alle regole comuni mentre partiva un giro v2. Quel giro è stato rifatto, e da allora lo script stampa le issue di ogni tentativo.
 - **Playwright** in Chrome headless, installato solo nello scratchpad, per verificare la UI: elenco, filtri, anteprime, 422, 503, Versioni.
-- **MCP**: nessun server MCP compare nel log come parte del flusso.
+- **MCP**: context7, per leggere la documentazione aggiornata di Elysia e `@elysia/static` (opzioni di validazione, `onError`, cache dei file statici) invece di affidarsi alla memoria del modello.
 
 ## Revisione e correzioni
 
@@ -82,3 +82,16 @@ Code review (`agent-reviewer`) e security review (`agent-security-reviewer`) son
 Insieme a questi: guardie di Stato (`AD_ARCHIVED`, `AD_HAS_NO_ACTIVE_VARIANT`), `GET /` letto a ogni richiesta, cifre mensili e benefit esclusi dal controllo della RAL e `encodeURIComponent` sugli id nella UI. In tutto `agent-code-writer` ha applicato gli **11 problemi da correggere subito**, con **25 test in più** (da 56 a 81), tutti attraverso `createApp` e il client finto. È stato rimandato `request_id` in `generation_runs`, perché richiede una migrazione delle colonne sui DB esistenti. Gli altri problemi rimandati sono documentati in [tradeoffs.md](tradeoffs.md). Il dettaglio è in [`docs/ai-log.md`](docs/ai-log.md).
 
 La modifica ai prompt era di sicurezza, non di qualità, quindi **v6 è stata riconvalidata con il modello reale**: un giro `gen:sample`, 5/6 al primo tentativo, 6/6 dopo il retry, riservatezza pulita. Il Brief però è peggiorato per variabilità del modello: anni nei requirements e trasferte di più giorni perse in `travel`. Il dettaglio è in [prompts.md](prompts.md).
+
+## Tempo
+
+Ricostruito dagli orari dei commit, circa **4h15'** di lavoro effettivo:
+
+| Fase | Durata |
+|---|---|
+| Modello dati (glossario, ADR), spec, agent di progetto, ricerca su Elysia | ~30' |
+| Backend: schema, API, pipeline LLM, test | ~1h30' |
+| UI, iterazioni dei prompt v1→v6 con il giudice, review, correzioni, documenti | ~1h |
+| Rifinitura: cartelle `backend/` e `frontend/`, Angolo → Focus, correzioni grafiche della UI | ~1h10' |
+
+Il modulo obbligatorio è stato chiuso in circa 2h. Più agent lavoravano in parallelo, quindi il tempo di calcolo totale è più alto del tempo trascorso.
